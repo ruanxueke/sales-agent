@@ -11,6 +11,7 @@ Thanks for helping improve Sales Agent.
 
 ```bash
 python scripts/quality_gate.py
+python scripts/check_public_release.py
 ```
 
 ## Security
