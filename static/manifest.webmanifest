@@ -1,0 +1,9 @@
+{
+  "name": "天赋家销售智能体中台",
+  "short_name": "天赋家中台",
+  "start_url": "/static/console.html",
+  "display": "standalone",
+  "background_color": "#16231f",
+  "theme_color": "#16231f",
+  "icons": []
+}

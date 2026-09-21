@@ -1,0 +1,3332 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#16231f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/static/manifest.webmanifest">
+<title>天赋家 · 销售智能体中台</title>
+<style>
+  :root {
+    --bg: #f3f5f7;
+    --panel: #ffffff;
+    --line: #dce1e6;
+    --text: #1f2933;
+    --muted: #6b7280;
+    --brand: #0f766e;
+    --brand-soft: #e6f4f2;
+    --warn: #b45309;
+    --warn-soft: #fdf0dd;
+    --danger: #b91c1c;
+    --danger-soft: #fdeaea;
+    --ok: #15803d;
+    --ok-soft: #e8f6ec;
+    --sidebar: #16231f;
+    --sidebar-text: #d8e2de;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+    font-size: 14px;
+  }
+  .app { display: flex; min-height: 100vh; }
+  aside {
+    width: 224px;
+    background: var(--sidebar);
+    color: var(--sidebar-text);
+    padding: 16px 12px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  aside .logo { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 18px; padding: 0 8px; }
+  aside .logo small { display: block; color: var(--sidebar-text); font-size: 11px; font-weight: 400; margin-top: 3px; }
+  nav button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: var(--sidebar-text);
+    padding: 9px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    text-align: left;
+    margin-bottom: 2px;
+  }
+  nav button:hover { background: rgba(255,255,255,.08); color: #fff; }
+  nav button.active { background: var(--brand); color: #fff; }
+  nav .group-label { font-size: 11px; color: #7d9189; padding: 12px 8px 4px; }
+  main { flex: 1; min-width: 0; padding: 18px 20px 48px; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+  .topbar h1 { font-size: 20px; margin: 0; font-weight: 600; }
+  .topbar .sub { color: var(--muted); font-size: 12px; margin-top: 3px; }
+  .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  button, .btn {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 7px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  button:hover, .btn:hover { border-color: var(--brand); color: var(--brand); }
+  button.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+  button.primary:hover { opacity: .9; color: #fff; }
+  button.danger { color: var(--danger); }
+  input, select, textarea {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 7px 10px;
+    background: var(--panel);
+    color: var(--text);
+    font-size: 13px;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--brand); }
+  .view { display: none; }
+  .view.active { display: block; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+  .kpi .label { color: var(--muted); font-size: 12px; }
+  .kpi .value { font-size: 22px; font-weight: 600; margin-top: 4px; }
+  .kpi .hint { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .box { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-bottom: 14px; }
+  .box h2 { font-size: 15px; margin: 0 0 10px; font-weight: 600; }
+  .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 500; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr.clickable { cursor: pointer; }
+  tbody tr.clickable:hover { background: var(--brand-soft); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+  .badge.ok { background: var(--ok-soft); color: var(--ok); }
+  .badge.warn { background: var(--warn-soft); color: var(--warn); }
+  .badge.danger { background: var(--danger-soft); color: var(--danger); }
+  .badge.muted { background: #eef0f3; color: var(--muted); }
+  .empty { color: var(--muted); text-align: center; padding: 24px 0; }
+  .error { color: var(--danger); background: var(--danger-soft); border-radius: 6px; padding: 10px 12px; margin-bottom: 12px; display: none; }
+  .bar { height: 8px; border-radius: 4px; background: var(--brand-soft); overflow: hidden; min-width: 24px; }
+  .bar > i { display: block; height: 100%; background: var(--brand); }
+  .lead-actions { display: flex; gap: 4px; flex-wrap: wrap; }
+  .lead-actions button { padding: 4px 8px; font-size: 12px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } aside { width: 100%; height: auto; position: static; } .app { flex-direction: column; } nav { display: flex; overflow-x: auto; } nav .group-label { display: none; } nav button { width: auto; white-space: nowrap; } }
+  .drawer-mask { position: fixed; inset: 0; background: rgba(15,23,42,.35); z-index: 40; display: none; }
+  .drawer-mask.open { display: block; }
+  .drawer { position: fixed; top: 0; right: -720px; width: min(680px, 94vw); height: 100vh; background: var(--bg); z-index: 41; transition: right .22s ease; overflow-y: auto; box-shadow: -8px 0 24px rgba(0,0,0,.12); padding: 18px; }
+  .drawer.open { right: 0; }
+  .drawer .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+  .drawer .head h2 { margin: 0; font-size: 18px; }
+  .profile-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+  .profile-grid .field { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; }
+  .profile-grid .field .k { color: var(--muted); font-size: 12px; }
+  .profile-grid .field .v { margin-top: 2px; word-break: break-all; }
+  .chat-line { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; margin-bottom: 6px; font-size: 13px; }
+  .chat-line .who { color: var(--muted); font-size: 12px; margin-bottom: 2px; }
+  .chart { display: flex; align-items: flex-end; gap: 8px; height: 120px; padding-top: 8px; }
+  .chart .col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
+  .chart .bar-wrap { width: 100%; height: 100px; display: flex; align-items: flex-end; }
+  .chart .bar-fill { width: 100%; background: var(--brand); border-radius: 4px 4px 0 0; min-height: 2px; }
+  .chart .day { font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .chart .val { font-size: 11px; color: var(--text); }
+  .muted { color: var(--muted); }
+  .toast-wrap { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+  .toast { padding: 10px 16px; border-radius: 8px; color: #fff; font-size: 13px; box-shadow: 0 6px 18px rgba(0,0,0,.18); max-width: 80vw; }
+  .toast.ok { background: var(--ok); } .toast.warn { background: var(--warn); } .toast.danger { background: var(--danger); }
+  .loading-mask { position: fixed; inset: 0; background: rgba(255,255,255,.55); z-index: 90; display: none; align-items: center; justify-content: center; }
+  .loading-mask.show { display: flex; } .loading-dot { width: 28px; height: 28px; border: 3px solid var(--brand-soft); border-top-color: var(--brand); border-radius: 50%; animation: spin .8s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }
+  .pager { display: flex; gap: 6px; align-items: center; justify-content: flex-end; padding: 10px 2px 2px; flex-wrap: wrap; } .pager button { padding: 4px 10px; font-size: 12px; } .pager button.current { background: var(--brand); color: #fff; border-color: var(--brand); } .pager .total { color: var(--muted); font-size: 12px; margin-right: auto; }
+  .login-mask { position: fixed; inset: 0; background: rgba(15,23,42,.92); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .login-box { background: var(--panel); border-radius: 10px; padding: 28px; width: min(360px, 100%); display: flex; flex-direction: column; gap: 12px; box-shadow: 0 20px 50px rgba(0,0,0,.3); }
+  .login-box h2 { margin: 0 0 4px; font-size: 18px; }
+  @media (max-width: 900px) { .toolbar input, .toolbar select, .toolbar textarea { flex: 1 1 100%; min-width: 0; } }
+</style>
+</head>
+<body>
+<div id="login-mask" class="login-mask" style="display:none">
+  <div class="login-box">
+    <h2>天赋家 · 销售智能体中台</h2>
+    <input id="login-user" placeholder="用户名" autocomplete="username">
+    <input id="login-pass" type="password" placeholder="密码" autocomplete="current-password">
+    <button id="login-btn" type="button" class="primary">登录</button>
+    <button id="login-api-key" type="button">使用接口密钥</button>
+    <div class="muted" id="login-error"></div>
+  </div>
+</div>
+<div class="app">
+  <aside>
+    <div class="logo">天赋家<small>销售智能体中台 · 获客 / 对话 / 跟进 / 成交</small></div>
+    <nav id="nav">
+      <div class="group-label">经营</div>
+      <button data-view="overview" class="active">总览</button>
+      <button data-view="customers">客户档案</button>
+      <button data-view="leads">线索管理</button>
+      <button data-view="orders">订单售后</button>
+      <div class="group-label">执行</div>
+      <button data-view="followups">自动跟进</button>
+      <button data-view="handovers">转人工</button>
+      <button data-view="quality">质检陪练</button>
+      <div class="group-label">资产</div>
+      <button data-view="knowledge">知识库投喂</button>
+      <button data-view="system">系统设置</button>
+      <div class="group-label">增长</div>
+      <button data-view="opportunities">商机</button>
+      <button data-view="cpq">报价合同</button>
+      <button data-view="finance">回款交付</button>
+      <button data-view="marketing">营销</button>
+      <button data-view="ammo">话术弹药库</button>
+      <button data-view="winning">赢单引擎</button>
+      <div class="group-label">执行</div>
+      <button data-view="sop">销售SOP</button>
+      <button data-view="tickets">工单回访</button>
+      <button data-view="nurture">培育计划</button>
+      <button data-view="engagement">预约优惠</button>
+      <div class="group-label">智能</div>
+      <button data-view="aiops">AI经营</button>
+      <button data-view="portraits">客户360</button>
+      <button data-view="optimization">优化中心</button>
+      <button data-view="feedback">标注回灌</button>
+      <div class="group-label">平台</div>
+      <button data-view="official">公众号菜单</button>
+      <button data-view="platform">平台设置</button>
+      <button data-view="wechat">个人微信</button>
+      <button data-view="compliance">合规设置</button>
+      <button data-view="enterprise">企业运营</button>
+      <button data-view="help">帮助中心</button>
+    </nav>
+  </aside>
+  <main>
+    <div class="topbar">
+      <div>
+        <h1 id="page-title">总览</h1>
+        <div class="sub" id="updated">加载中...</div>
+      </div>
+      <div class="actions">
+<button id="set-api-key" type="button">接口密钥</button>
+        <button id="refresh" type="button">刷新数据</button>
+        <button id="notify-btn" type="button">通知<span id="notify-count" style="margin-left:4px;color:var(--danger)"></span></button>
+        <button id="logout-btn" type="button">退出登录</button>
+      </div>
+    </div>
+    <div id="error" class="error"></div>
+
+    <section id="view-overview" class="view active">
+      <div class="kpis" id="overview-kpis"></div>
+      <div id="overview-alerts"></div>
+      <div class="grid-2">
+        <div class="box"><h2>销售阶段分布</h2><div id="overview-stages"></div></div>
+        <div class="box"><h2>渠道来源分布</h2><div id="overview-sources"></div></div>
+      </div>
+    </section>
+
+    <section id="view-customers" class="view">
+      <div class="box">
+        <div class="toolbar">
+          <input id="customer-search" placeholder="搜索姓名/手机/微信号">
+          <button id="customer-search-btn" type="button">查询</button>
+          <span class="muted">点击客户行打开档案</span>
+        </div>
+        <div id="customers-table"></div>
+      </div>
+    </section>
+
+    <section id="view-leads" class="view">
+      <div class="box">
+        <div class="toolbar">
+          <input type="file" id="lead-file" accept=".csv,.xlsx,.xlsm">
+          <button id="lead-import" type="button">导入线索</button>
+          <button id="lead-template" type="button">下载模板</button>
+          <button id="lead-recycle" type="button">公海回收</button>
+          <select id="lead-status-filter">
+            <option value="">全部状态</option>
+            <option value="pending">公海</option>
+            <option value="assigned">已分配</option>
+            <option value="claimed">已认领</option>
+            <option value="following">跟进中</option>
+            <option value="won">已成交</option>
+            <option value="lost">已流失</option>
+          </select>
+          <input id="lead-keyword" placeholder="姓名/手机/微信号">
+          <button id="lead-search" type="button">查询</button>
+          <button id="lead-batch-claim" type="button">批量认领</button>
+          <button id="lead-batch-won" type="button">批量成交</button>
+          <button id="lead-batch-lost" type="button">批量流失</button>
+        </div>
+        <div id="leads-table"></div>
+      </div>
+    </section>
+
+    <section id="view-orders" class="view">
+      <div class="kpis" id="orders-kpis"></div>
+      <div class="box">
+        <h2>新建订单</h2>
+        <div class="toolbar">
+          <input id="order-name" placeholder="客户姓名">
+          <input id="order-phone" placeholder="手机号">
+          <input id="order-product" placeholder="课程/产品">
+          <input id="order-amount" type="number" step="0.01" placeholder="金额">
+          <input id="order-session" placeholder="客户ID(可选)">
+          <button id="order-create" type="button" class="primary">新建订单</button>
+        </div>
+      </div>
+      <div class="box"><h2>订单列表</h2><div id="orders-table"></div></div>
+      <div class="box"><h2>售后列表</h2><div id="after-sales-table"></div></div>
+    </section>
+
+    <section id="view-followups" class="view">
+      <div class="kpis" id="followup-kpis"></div>
+      <div class="box">
+        <div class="toolbar">
+          <input id="followup-session" placeholder="客户ID/session_id">
+          <button id="followup-plan" type="button" class="primary">创建跟进计划</button>
+          <button id="followup-dispatch" type="button">立即派发到期跟进</button>
+        </div>
+        <div id="followup-table"></div>
+      </div>
+    </section>
+
+    <section id="view-handovers" class="view">
+      <div class="kpis" id="handover-kpis"></div>
+      <div class="box"><h2>转人工请求</h2><div id="handover-table"></div></div>
+    </section>
+
+    <section id="view-quality" class="view">
+      <div class="kpis" id="quality-kpis"></div>
+      <div class="box">
+        <div class="toolbar">
+          <input id="quality-session" placeholder="客户ID/session_id">
+          <button id="quality-check" type="button" class="primary">执行质检</button>
+          <select id="coach-stage">
+            <option value="异议处理">异议处理</option>
+            <option value="价格异议">价格异议</option>
+            <option value="需求挖掘">需求挖掘</option>
+            <option value="成交推进">成交推进</option>
+            <option value="售后回访">售后回访</option>
+          </select>
+          <button id="coach-generate" type="button">生成陪练</button>
+        </div>
+        <div id="coach-output" class="muted" style="padding:4px 0 10px"></div>
+        <div id="quality-table"></div>
+      </div>
+    </section>
+
+    <section id="view-knowledge" class="view">
+      <div class="kpis" id="knowledge-kpis"></div>
+      <div class="box">
+        <h2>知识库投喂</h2>
+        <div class="toolbar">
+          <input type="file" id="knowledge-file" accept=".txt,.md,.pdf,.docx,.csv">
+          <button id="knowledge-upload" type="button" class="primary">上传投喂</button>
+          <button id="knowledge-rebuild" type="button">重建向量库</button>
+        </div>
+        <div class="toolbar">
+          <input id="knowledge-text" placeholder="直接添加一段知识文本" style="flex:1">
+          <button id="knowledge-add-text" type="button">添加文本</button>
+        </div>
+        <div id="knowledge-files"></div>
+      </div>
+      <div class="box"><h2>版本记录</h2><div id="knowledge-versions"></div></div>
+      <div class="box"><h2>知识缺口（待补充问题）</h2><div id="knowledge-gaps"></div></div>
+    </section>
+
+    <section id="view-system" class="view">
+      <div class="box">
+        <h2>系统自检</h2>
+        <div class="toolbar">
+          <button id="self-check" type="button" class="primary">立即自检</button>
+          <button id="backup-now" type="button">立即备份</button>
+        </div>
+        <div id="system-check-output"></div>
+      </div>
+      <div class="box">
+        <h2>数据安全</h2>
+        <div class="toolbar">
+          <button id="backup-remote" type="button">归档备份到对象存储</button>
+          <input id="erase-session" placeholder="客户ID（删除数据）" style="flex:1">
+          <button id="erase-btn" type="button" class="danger">删除客户数据</button>
+        </div>
+        <div class="muted" id="storage-status"></div>
+        <div class="toolbar" style="margin-top:8px">
+          <input id="consent-session" placeholder="客户ID（查授权/删除申请）" style="flex:1">
+          <button id="consent-query" type="button">查授权</button>
+        </div>
+        <div id="consent-list"></div>
+        <div id="deletion-list"></div>
+      </div>
+      <div class="box">
+        <h2>模型路由</h2>
+        <div class="toolbar">
+          <button id="router-auto" type="button">自动</button>
+          <button id="router-primary" type="button">主模型</button>
+          <button id="router-backup" type="button">备用模型</button>
+          <button id="router-status" type="button" class="primary">查看状态</button>
+        </div>
+        <div id="router-output" class="muted" style="padding:4px 0"></div>
+      </div>
+      <div class="box">
+        <h2>LLM调用记录</h2>
+        <div class="toolbar"><button id="trace-refresh" type="button">刷新</button><span class="muted" id="trace-summary"></span></div>
+        <div id="trace-table"></div>
+      </div>
+      <div class="box">
+        <h2>滥用黑名单</h2>
+        <div class="toolbar">
+          <input id="block-session" placeholder="客户ID">
+          <input id="block-reason" placeholder="原因" style="flex:1">
+          <button id="block-add" type="button">拉黑</button>
+        </div>
+        <div id="block-table"></div>
+      </div>
+      <div class="box">
+        <h2>数据导出</h2>
+        <div class="toolbar">
+          <button type="button" data-export="/api/v1/export/customers.csv" data-name="customers.csv">客户 CSV</button>
+          <button type="button" data-export="/api/v1/export/leads.csv" data-name="leads.csv">线索 CSV</button>
+          <button type="button" data-export="/api/v1/export/orders.csv" data-name="orders.csv">订单 CSV</button>
+          <button type="button" data-export="/api/v1/export/quality.csv" data-name="quality.csv">质检 CSV</button>
+          <button type="button" data-export="/api/v1/export/opportunities.csv" data-name="opportunities.csv">商机 CSV</button>
+          <button type="button" data-export="/api/v1/export/quotes.csv" data-name="quotes.csv">报价 CSV</button>
+          <button type="button" data-export="/api/v1/export/contracts.csv" data-name="contracts.csv">合同 CSV</button>
+          <button type="button" data-export="/api/v1/export/receivables.csv" data-name="receivables.csv">应收 CSV</button>
+          <button type="button" data-export="/api/v1/export/tickets.csv" data-name="tickets.csv">工单 CSV</button>
+          <button type="button" data-export="/api/v1/export/campaigns.csv" data-name="campaigns.csv">活动 CSV</button>
+          <button type="button" data-export="/api/v1/export/team.csv" data-name="team.csv">团队 CSV</button>
+        </div>
+      </div>
+      <div class="box"><h2>审计日志</h2><div class="toolbar"><select id="audit-level"><option value="">全部级别</option><option value="info">普通</option><option value="warn">警告</option><option value="critical">严重</option></select><select id="audit-category"><option value="">全部类型</option><option value="login">登录</option><option value="sensitive">敏感操作</option><option value="data">数据变更</option><option value="system">系统</option></select><button id="audit-search" type="button">查询</button></div><div id="audit-table"></div></div>
+      <div class="box"><h2>销售提示词</h2><div class="muted" style="margin-bottom:8px">修改保存后立即生效，无需重启；必须保留 {context} {customer_profile} {stage} {chat_history} {input}</div><textarea id="prompt-editor" style="width:100%;min-height:320px;font-family:Consolas,monospace"></textarea><div class="toolbar"><button id="prompt-save" type="button" class="primary">保存提示词</button><button id="prompt-reload" type="button">重新载入</button></div></div>
+      <div class="box"><h2>提示词版本</h2><div class="toolbar"><button id="prompt-versions" type="button">刷新版本</button><button id="prompt-regression" type="button">回归测试</button></div><div id="prompt-version-list"></div><div id="prompt-regression-output" class="muted" style="white-space:pre-wrap"></div></div>
+    </section>
+
+    <section id="view-opportunities" class="view">
+      <div class="kpis" id="opportunity-kpis"></div>
+      <div class="box">
+        <h2>新建商机</h2>
+        <div class="toolbar">
+          <input id="opp-name" placeholder="商机名称">
+          <input id="opp-session" placeholder="客户ID">
+          <input id="opp-product" placeholder="产品">
+          <input id="opp-amount" type="number" step="0.01" placeholder="金额">
+          <input id="opp-owner" placeholder="负责人">
+          <input id="opp-close" placeholder="预计成交时间">
+          <select id="opp-stage">
+            <option value="qualifying">需求确认</option>
+            <option value="proposal">方案报价</option>
+            <option value="negotiation">商务谈判</option>
+          </select>
+          <button id="opp-create" type="button" class="primary">创建</button>
+          <button id="opp-refresh-risk" type="button">刷新停滞预警</button>
+        </div>
+      </div>
+      <div class="box"><h2>商机列表</h2><div id="opportunity-table"></div></div>
+    </section>
+
+    <section id="view-cpq" class="view">
+      <div class="kpis" id="cpq-kpis"></div>
+      <div class="box">
+        <h2>价目表</h2>
+        <div class="toolbar">
+          <input id="price-name" placeholder="产品名称">
+          <input id="price-sku" placeholder="商品编号">
+          <input id="price-value" type="number" step="0.01" placeholder="价格">
+          <button id="price-create" type="button" class="primary">添加价格</button>
+        </div>
+        <div id="price-table"></div>
+      </div>
+      <div class="box">
+        <h2>新建报价</h2>
+        <div class="toolbar">
+          <input id="quote-customer" placeholder="客户名称">
+          <input id="quote-session" placeholder="客户ID">
+          <input id="quote-product" placeholder="产品">
+          <input id="quote-amount" type="number" step="0.01" placeholder="原价">
+          <input id="quote-discount" type="number" step="0.01" placeholder="折扣%">
+          <input id="quote-valid" placeholder="有效期至">
+          <button id="quote-create" type="button" class="primary">创建报价</button>
+        </div>
+      </div>
+      <div class="box"><h2>报价列表</h2><div id="quote-table"></div></div>
+      <div class="box">
+        <h2>新建合同</h2>
+        <div class="toolbar">
+          <input id="contract-customer" placeholder="客户名称">
+          <input id="contract-session" placeholder="客户ID">
+          <input id="contract-product" placeholder="产品">
+          <input id="contract-amount" type="number" step="0.01" placeholder="金额">
+          <input id="contract-expires" placeholder="到期时间">
+          <textarea id="contract-terms" placeholder="合同条款" style="flex:1"></textarea>
+          <button id="contract-create" type="button" class="primary">创建合同</button>
+        </div>
+      </div>
+      <div class="box"><h2>合同列表</h2><div id="contract-table"></div></div>
+      <div class="box"><h2>审批流</h2><div id="approval-table"></div></div>
+    </section>
+
+    <section id="view-finance" class="view">
+      <div class="kpis" id="finance-kpis"></div>
+      <div class="box">
+        <h2>发货</h2>
+        <div class="toolbar">
+          <input id="ship-order" type="number" placeholder="订单ID">
+          <input id="ship-carrier" placeholder="承运商">
+          <input id="ship-tracking" placeholder="运单号">
+          <input id="ship-address" placeholder="收货地址">
+          <button id="ship-create" type="button" class="primary">创建发货</button>
+        </div>
+        <div id="shipment-table"></div>
+      </div>
+      <div class="box">
+        <h2>开票</h2>
+        <div class="toolbar">
+          <input id="invoice-order" type="number" placeholder="订单ID">
+          <input id="invoice-amount" type="number" step="0.01" placeholder="金额">
+          <input id="invoice-title" placeholder="发票抬头">
+          <input id="invoice-taxno" placeholder="税号">
+          <button id="invoice-create" type="button" class="primary">开票</button>
+        </div>
+        <div id="invoice-table"></div>
+      </div>
+      <div class="box">
+        <h2>回款计划</h2>
+        <div class="toolbar">
+          <input id="plan-order" type="number" placeholder="订单ID">
+          <input id="plan-amounts" placeholder="金额，逗号分隔">
+          <input id="plan-dates" placeholder="到期时间，逗号分隔">
+          <button id="plan-create" type="button" class="primary">创建计划</button>
+          <button id="finance-refresh" type="button">刷新逾期</button>
+        </div>
+        <div id="plan-table"></div>
+      </div>
+      <div class="box"><h2>应收核销</h2><div id="receivable-table"></div></div>
+    </section>
+
+    <section id="view-marketing" class="view">
+      <div class="kpis" id="marketing-kpis"></div>
+      <div class="box">
+        <h2>营销活动</h2>
+        <div class="toolbar">
+          <input id="campaign-name" placeholder="活动名称">
+          <select id="campaign-channel">
+            <option value="official">公众号</option>
+            <option value="wechat">个人微信</option>
+            <option value="ad">广告</option>
+            <option value="form">表单</option>
+          </select>
+          <input id="campaign-budget" type="number" step="0.01" placeholder="预算">
+          <button id="campaign-create" type="button" class="primary">创建活动</button>
+        </div>
+        <div id="campaign-table"></div>
+      </div>
+      <div class="box">
+        <h2>广告指标</h2>
+        <div class="toolbar">
+          <input id="ad-campaign" type="number" placeholder="活动ID">
+          <input id="ad-date" placeholder="日期">
+          <input id="ad-impressions" type="number" placeholder="曝光">
+          <input id="ad-clicks" type="number" placeholder="点击">
+          <input id="ad-conversions" type="number" placeholder="转化">
+          <input id="ad-cost" type="number" step="0.01" placeholder="成本">
+          <input id="ad-revenue" type="number" step="0.01" placeholder="收入">
+          <button id="ad-save" type="button" class="primary">保存指标</button>
+        </div>
+        <div id="ad-table"></div>
+      </div>
+      <div class="box">
+        <h2>复购计划</h2>
+        <div class="toolbar">
+          <input id="rp-session" placeholder="客户ID">
+          <input id="rp-product" placeholder="产品">
+          <input id="rp-date" placeholder="计划日期">
+          <input id="rp-note" placeholder="备注">
+          <button id="rp-create" type="button" class="primary">创建计划</button>
+          <button id="rp-dispatch" type="button">派发到期计划</button>
+        </div>
+        <div id="rp-table"></div>
+      </div>
+    </section>
+
+    <section id="view-sop" class="view">
+      <div class="kpis" id="sop-kpis"></div>
+      <div class="box">
+        <h2>SOP模板</h2>
+        <div class="toolbar">
+          <input id="sop-name" placeholder="模板名称">
+          <input id="sop-stage" placeholder="适用阶段">
+          <textarea id="sop-steps" placeholder='步骤JSON：[{"name":"发送方案","due_hours":2}]' style="flex:1"></textarea>
+          <button id="sop-create" type="button" class="primary">创建模板</button>
+          <button id="sop-refresh" type="button">刷新逾期</button>
+        </div>
+        <div id="sop-template-table"></div>
+      </div>
+      <div class="box"><h2>执行记录</h2><div id="sop-exec-table"></div></div>
+    </section>
+
+    <section id="view-tickets" class="view">
+      <div class="kpis" id="ticket-kpis"></div>
+      <div class="box">
+        <h2>新建工单</h2>
+        <div class="toolbar">
+          <input id="ticket-title" placeholder="标题">
+          <input id="ticket-session" placeholder="客户ID">
+          <input id="ticket-category" placeholder="分类">
+          <select id="ticket-priority">
+            <option value="low">低</option>
+            <option value="medium" selected>中</option>
+            <option value="high">高</option>
+            <option value="urgent">紧急</option>
+          </select>
+          <input id="ticket-owner" placeholder="负责人">
+          <button id="ticket-create" type="button" class="primary">创建工单</button>
+          <button id="ticket-refresh" type="button">刷新SLA</button>
+        </div>
+        <div id="ticket-table"></div>
+      </div>
+      <div class="box">
+        <h2>回访记录</h2>
+        <div class="toolbar">
+          <input id="visit-session" placeholder="客户ID">
+          <input id="visit-order" type="number" placeholder="订单ID">
+          <input id="visit-type" placeholder="类型">
+          <input id="visit-next" placeholder="下次回访时间">
+          <textarea id="visit-content" placeholder="回访内容" style="flex:1"></textarea>
+          <button id="visit-create" type="button" class="primary">添加回访</button>
+        </div>
+        <div id="visit-table"></div>
+      </div>
+    </section>
+
+    <section id="view-nurture" class="view">
+      <div class="kpis" id="nurture-kpis"></div>
+      <div class="box">
+        <h2>培育计划</h2>
+        <div class="toolbar">
+          <input id="nurture-name" placeholder="计划名称">
+          <select id="nurture-trigger">
+            <option value="stage">阶段</option>
+            <option value="intent">意向等级</option>
+            <option value="event">行为事件</option>
+          </select>
+          <input id="nurture-value" placeholder="触发值">
+          <button id="nurture-create" type="button" class="primary">创建计划</button>
+          <button id="nurture-dispatch" type="button">立即触达</button>
+        </div>
+        <div id="nurture-campaign-table"></div>
+      </div>
+      <div class="box">
+        <h2>触达规则</h2>
+        <div class="toolbar">
+          <input id="rule-campaign" type="number" placeholder="计划ID">
+          <input id="rule-seq" type="number" placeholder="顺序">
+          <input id="rule-condition" placeholder="条件类型(always/stage/intent)">
+          <input id="rule-condition-value" placeholder="条件值">
+          <input id="rule-delay" type="number" placeholder="延迟小时">
+          <textarea id="rule-content" placeholder="内容，支持{nickname}/{goal}/{product}" style="flex:1"></textarea>
+          <button id="rule-create" type="button" class="primary">添加规则</button>
+        </div>
+        <div id="nurture-rule-table"></div>
+      </div>
+      <div class="box"><h2>触达记录</h2><div id="nurture-event-table"></div></div>
+    </section>
+
+    <section id="view-aiops" class="view">
+      <div class="box">
+        <h2>AI主动经营</h2>
+        <div class="toolbar">
+          <button id="briefing-run" type="button" class="primary">生成每日简报</button>
+          <input id="ask-question" placeholder="用一句话问数据，例如：当前商机有多少？" style="flex:1">
+          <button id="ask-run" type="button">问数据</button>
+          <select id="coach-opp"></select>
+          <button id="coach-run" type="button">赢单教练</button>
+          <select id="risk-contract"></select>
+          <button id="risk-run" type="button">合同风控</button>
+        </div>
+        <div id="aiops-output" class="muted" style="white-space:pre-wrap;padding:8px 0"></div>
+      </div>
+      <div class="box"><h2>AI报告记录</h2><div id="aiops-table"></div></div>
+    </section>
+
+    <section id="view-portraits" class="view">
+      <div class="box">
+        <h2>客户360画像</h2>
+        <div class="toolbar">
+          <input id="portrait-session" placeholder="客户ID/session_id">
+          <button id="portrait-load" type="button" class="primary">加载画像</button>
+        </div>
+        <div id="portrait-summary"></div>
+      </div>
+      <div class="box">
+        <h2>补充画像信息</h2>
+        <div class="toolbar">
+          <input id="p-add-session" placeholder="客户ID/session_id">
+          <input id="p-tag" placeholder="标签">
+          <button id="p-tag-add" type="button">加标签</button>
+          <input id="p-risk-type" placeholder="风险类型">
+          <input id="p-risk-content" placeholder="风险内容">
+          <button id="p-risk-add" type="button">加风险</button>
+        </div>
+        <div class="toolbar">
+          <input id="p-company" placeholder="公司名">
+          <input id="p-legal" placeholder="法人">
+          <input id="p-industry" placeholder="行业">
+          <button id="p-business-add" type="button">保存工商信息</button>
+        </div>
+        <div class="toolbar">
+          <input id="p-person" placeholder="干系人姓名">
+          <input id="p-person-role" placeholder="角色">
+          <input id="p-person-influence" placeholder="影响力 high/medium/low">
+          <button id="p-person-add" type="button">加干系人</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-platform" class="view">
+      <div class="kpis" id="platform-kpis"></div>
+      <div class="box">
+        <h2>BI指标</h2>
+        <div id="bi-table"></div>
+      </div>
+      <div class="box">
+        <h2>自定义字段</h2>
+        <div class="toolbar">
+          <select id="field-entity">
+            <option value="customer">客户</option>
+            <option value="lead">线索</option>
+            <option value="opportunity">商机</option>
+            <option value="quote">报价</option>
+            <option value="contract">合同</option>
+            <option value="ticket">工单</option>
+          </select>
+          <input id="field-name" placeholder="字段名">
+          <input id="field-key" placeholder="字段Key">
+          <select id="field-type">
+            <option value="text">文本</option>
+            <option value="number">数字</option>
+            <option value="select">下拉</option>
+            <option value="date">日期</option>
+            <option value="textarea">多行文本</option>
+          </select>
+          <button id="field-create" type="button" class="primary">添加字段</button>
+        </div>
+        <div id="field-table"></div>
+      </div>
+      <div class="box">
+        <h2>角色与团队</h2>
+        <div class="toolbar">
+          <input id="role-name" placeholder="角色名">
+          <input id="role-perms" placeholder="权限，逗号分隔">
+          <button id="role-create" type="button" class="primary">创建角色</button>
+          <input id="member-name" placeholder="姓名">
+          <input id="member-nick" placeholder="微信昵称">
+          <input id="member-role" placeholder="角色">
+          <button id="member-create" type="button">添加成员</button>
+        </div>
+        <div id="role-table"></div>
+        <div id="member-table"></div>
+      </div>
+    </section>
+
+    <section id="view-official" class="view">
+      <div class="box">
+        <div class="toolbar">
+          <button id="menu-add" type="button">添加一级菜单</button>
+          <button id="menu-load" type="button">获取当前菜单</button>
+          <button id="menu-publish" type="button" class="primary">发布菜单</button>
+          <button id="menu-delete" type="button" class="danger">删除菜单</button>
+          <span class="muted">一级最多 3 个，每个最多 5 个子菜单</span>
+        </div>
+        <div id="official-menu-editor"></div>
+      </div>
+    </section>
+    <section id="view-wechat" class="view">
+      <div class="kpis" id="wechat-kpis"></div>
+      <div class="grid-2">
+        <div class="box"><h2>通道状态</h2><div id="wechat-channel-status"></div></div>
+        <div class="box"><h2>公众号通道</h2><div id="wechat-official-status"></div></div>
+      </div>
+      <div class="box"><h2>机器人日志</h2><div class="toolbar"><button id="wechat-logs-refresh" type="button">刷新日志</button><span class="muted">最近 50 行</span></div><pre id="wechat-logs" style="max-height:340px;overflow:auto;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px;font-family:Consolas,monospace;font-size:12px;white-space:pre-wrap"></pre></div>
+      <div class="box"><h2>运行设置</h2><div class="toolbar">
+        <label class="muted">目标群：</label><input id="wc-target-room" style="width:200px" placeholder="群名称">
+        <label class="muted">群触发方式：</label><select id="wc-trigger"><option value="false">群内全部文本</option><option value="true">仅 @机器人</option></select>
+        <label class="muted">私聊自动回复：</label><select id="wc-personal"><option value="false">关闭（只记录）</option><option value="true">开启</option></select>
+      </div>
+      <div class="toolbar">
+        <label class="muted">回复延迟(秒)：</label><input id="wc-delay" type="number" min="0" style="width:90px" placeholder="5">
+        <label class="muted">拆分长度(字)：</label><input id="wc-maxlen" type="number" min="1" style="width:90px" placeholder="50">
+        <label class="muted">拆分间隔(秒)：</label><input id="wc-split" type="number" min="0" style="width:90px" placeholder="1.5">
+        <button id="wc-save" type="button" class="primary">保存并应用</button>
+        <span class="muted" id="wc-save-msg"></span>
+      </div>
+      </div>
+    </section>
+
+    <section id="view-ammo" class="view">
+      <div class="kpis" id="ammo-kpis"></div>
+      <div class="box"><h2>产品知识</h2><div class="toolbar"><input id="pk-name" placeholder="产品名"><input id="pk-price" placeholder="价格"><input id="pk-selling" placeholder="卖点" style="flex:1"><button id="pk-add" type="button" class="primary">添加</button></div><div id="pk-table"></div></div>
+      <div class="box"><h2>异议应答</h2><div class="toolbar"><input id="obj-scene" placeholder="异议场景"><input id="obj-reply" placeholder="标准回复" style="flex:1"><input id="obj-evidence" placeholder="证据"><input id="obj-next" placeholder="下一步"><button id="obj-add" type="button" class="primary">添加</button></div><div id="obj-table"></div></div>
+      <div class="box"><h2>竞品应对</h2><div class="toolbar"><input id="cp-name" placeholder="竞品"><input id="cp-saying" placeholder="客户常见说法" style="flex:1"><input id="cp-diff1" placeholder="差异点1"><input id="cp-reply" placeholder="标准回应" style="flex:1"><button id="cp-add" type="button" class="primary">添加</button></div><div id="cp-table"></div></div>
+      <div class="box"><h2>跟进话术库</h2><div class="toolbar"><select id="fs-scene"><option value="">全部状态</option><option value="new_lead">新线索</option><option value="replied">已回复</option><option value="hesitating">犹豫</option><option value="comparing">比价</option><option value="read_no_reply">已读不回</option><option value="rejected">明确拒绝</option><option value="won">已成交</option></select><input id="fs-script" placeholder="话术示例" style="flex:1"><input id="fs-value" placeholder="价值点"><input id="fs-goal" placeholder="下一步目标"><input id="fs-delay" type="number" placeholder="延迟小时"><button id="fs-add" type="button" class="primary">添加</button></div><div id="fs-table"></div></div>
+      <div class="box"><h2>销售案例投喂</h2><div class="toolbar"><input id="case-title" placeholder="案例标题"><input id="case-channel" placeholder="渠道"><textarea id="case-content" placeholder="粘贴聊天记录/录音转写/成交或失败案例" style="flex:1;min-height:80px"></textarea><button id="case-import" type="button" class="primary">导入学习</button></div><div id="case-table"></div></div>
+    </section>
+
+    <section id="view-winning" class="view">
+      <div class="kpis" id="winning-kpis"></div>
+      <div class="box"><h2>差异点</h2><div class="toolbar"><input id="df-product" placeholder="产品"><input id="df-point" placeholder="差异点" style="flex:1"><input id="df-concern" placeholder="对应客户在意项"><input id="df-evidence" placeholder="证据" style="flex:1"><button id="df-add" type="button" class="primary">添加</button></div><div id="df-table"></div></div>
+      <div class="box"><h2>证据库</h2><div class="toolbar"><select id="ev-type"><option value="case">案例</option><option value="trial">试用</option><option value="promise">承诺</option><option value="policy">售后政策</option></select><input id="ev-title" placeholder="标题"><input id="ev-content" placeholder="内容" style="flex:1"><input id="ev-link" placeholder="链接"><input id="ev-scenario" placeholder="适用场景"><button id="ev-add" type="button" class="primary">添加</button></div><div id="ev-table"></div></div>
+      <div class="box"><h2>关键时刻工具</h2><div class="toolbar"><select id="tool-type"><option value="trial">试用</option><option value="exchange">退换</option><option value="benefit">限时权益</option><option value="decision">决策清单</option></select><input id="tool-name" placeholder="工具名"><input id="tool-desc" placeholder="说明" style="flex:1"><input id="tool-scene" placeholder="适用场景"><button id="tool-add" type="button" class="primary">添加</button></div><div id="tool-table"></div></div>
+    </section>
+
+    <section id="view-feedback" class="view">
+      <div class="kpis" id="feedback-kpis"></div>
+      <div class="box">
+        <div class="toolbar">
+          <select id="feedback-status"><option value="">全部状态</option><option value="open">待处理</option><option value="closed">已回灌</option></select>
+          <button id="feedback-search" type="button">查询</button>
+        </div>
+        <div id="feedback-table"></div>
+      </div>
+    </section>
+    <section id="view-enterprise" class="view">
+      <div class="kpis" id="enterprise-kpis"></div>
+      <div class="box"><h2>团队战报 / 排行榜</h2><div id="leaderboard-table"></div></div>
+      <div class="box"><h2>业绩目标</h2><div class="toolbar"><input id="target-member" placeholder="成员"><input id="target-period" placeholder="周期 如2026-08"><input id="target-amount" type="number" placeholder="目标金额"><button id="target-add" type="button" class="primary">添加目标</button></div><div id="target-table"></div></div>
+      <div class="box"><h2>佣金</h2><div class="toolbar"><input id="rule-name" placeholder="规则名"><input id="rule-value" type="number" placeholder="比例%"><button id="rule-add" type="button">添加规则</button><button id="commission-compute" type="button">计算佣金</button></div><div id="rule-table"></div><div id="commission-table"></div></div>
+      <div class="box"><h2>审批规则</h2><div class="toolbar"><select id="rule-biz"><option value="quote">报价</option><option value="contract">合同</option></select><input id="rule-name2" placeholder="规则名"><select id="rule-key"><option value="discount_rate">折扣率%</option><option value="amount">金额</option></select><input id="rule-threshold" type="number" placeholder="阈值"><input id="rule-approver" placeholder="审批人"><button id="approval-rule-add" type="button">添加规则</button></div><div id="approval-rule-table"></div></div>
+      <div class="box"><h2>SLA 策略与客户分级</h2><div class="toolbar"><select id="sla-priority"><option value="low">低</option><option value="medium">中</option><option value="high">高</option><option value="urgent">紧急</option></select><input id="sla-name" placeholder="策略名"><input id="sla-hours" type="number" placeholder="解决时限h"><button id="sla-add" type="button">添加策略</button></div><div id="sla-table"></div><div class="toolbar" style="margin-top:8px"><input id="tier-name" placeholder="等级名 如VIP"><input id="tier-min" type="number" placeholder="最低消费"><button id="tier-add" type="button">添加等级</button></div><div id="tier-table"></div></div>
+      <div class="box"><h2>账号管理</h2><div class="toolbar"><input id="user-name" placeholder="用户名"><input id="user-pass" placeholder="密码"><input id="user-role" placeholder="角色 admin/sales"><button id="user-add" type="button">创建账号</button></div><div id="user-table"></div></div>
+    </section>
+    <section id="view-help" class="view">
+      <div class="box"><h2>配置向导</h2><div id="onboarding-list"></div></div>
+      <div class="box"><h2>隐私政策</h2><div class="muted">我们仅收集为您提供课程咨询服务所必需的信息（昵称、联系方式、咨询内容），用于销售跟进与服务交付。您有权查询、更正、删除您的个人信息。删除申请请在中台“系统设置 → 数据安全”处理。</div></div>
+      <div class="box"><h2>操作手册</h2>
+        <div class="box"><h3>管理员</h3><div class="muted">配置产品、知识库、通道、付款交付；查看业绩佣金与审批；维护账号权限；定期自检和备份。</div></div>
+        <div class="box"><h3>销售</h3><div class="muted">用客户档案跟进客户，查看聊天记录与引用溯源；用质检陪练练话术；把优质话术回灌到弹药库。</div></div>
+        <div class="box"><h3>客服</h3><div class="muted">处理工单与回访，关注 SLA 到期；客户说已付款时核实后交付课程和进群文档。</div></div>
+        <div class="box"><h3>财务</h3><div class="muted">查看订单、回款、开票、应收核销；导出 CSV；核对佣金明细。</div></div>
+      </div>
+      <div class="box"><h2>栏目帮助</h2><div id="module-help"></div></div>
+    </section>
+  </main>
+</div>
+
+<div id="drawer-mask" class="drawer-mask"></div>
+<div id="drawer" class="drawer"><div id="drawer-content"></div></div>
+
+<script src="/static/solda.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const API_KEY = localStorage.getItem("sales_api_key") || "";
+const SALES_TOKEN = localStorage.getItem("sales_token") || "";
+const VIEWS = ["overview", "customers", "leads", "orders", "followups", "handovers", "quality", "knowledge", "system",
+  "opportunities", "cpq", "finance", "marketing", "sop", "tickets", "nurture", "aiops", "portraits", "platform", "official"];
+const EXTRA_VIEWS = ["ammo", "winning", "engagement", "optimization", "compliance", "feedback", "enterprise", "help"];
+EXTRA_VIEWS.forEach((v) => { if (!VIEWS.includes(v)) VIEWS.push(v); });
+if (!VIEWS.includes("wechat")) VIEWS.push("wechat");
+const TITLES = {
+  overview: "总览", customers: "客户档案", leads: "线索管理", orders: "订单售后",
+  followups: "自动跟进", handovers: "转人工", quality: "质检陪练", knowledge: "知识库投喂", system: "系统设置",
+};
+const EXTRA_TITLES = {
+  opportunities: "商机管理", cpq: "报价合同", finance: "回款交付", marketing: "营销",
+  sop: "销售SOP", tickets: "工单回访", nurture: "培育计划", aiops: "AI经营",
+  portraits: "客户360", platform: "平台设置", official: "公众号", wechat: "个人微信",
+  ammo: "话术弹药库", winning: "赢单引擎", engagement: "预约优惠", optimization: "优化中心", compliance: "合规设置", feedback: "标注回灌", enterprise: "企业运营", help: "帮助中心",
+};
+Object.assign(TITLES, EXTRA_TITLES);
+let state = {
+  customers: [], leads: { list: [], stats: null }, orders: { orders: [], after_sales: [], stats: null },
+  followup: { tasks: [], stats: null }, handover: { list: [], stats: null },
+  quality: { reports: [], stats: null }, knowledge: { files: [], versions: [], stats: null },
+  overview: null, system: { logs: [] },
+  opportunities: { list: [], stats: null },
+  cpq: { items: [], quotes: [], contracts: [], approvals: [], stats: null },
+  finance: { shipments: [], invoices: [], plans: [], receivables: [], stats: null },
+  marketing: { campaigns: [], metrics: [], repurchases: [], stats: null },
+  sop: { templates: [], executions: [], stats: null },
+  tickets: { tickets: [], visits: [], stats: null },
+  nurture: { campaigns: [], rules: [], events: [], stats: null },
+  aiops: { reports: [] },
+  portraits: { portrait: null },
+  platform: { fields: [], roles: [], members: [], bi: null },
+  official: { buttons: [] },
+  wechat: { status: null, qrcode: { qr_url: "", qr_path: "" }, logs: [], overview: null },
+  ammo: { products: [], objections: [], competitors: [], scripts: [], cases: [] },
+  winning: { differentiators: [], evidence: [], tools: [] },
+  engagement: { appointments: [], coupons: [], userCoupons: [], paymentLinks: [], stats: null },
+  optimization: { summaries: [], experiments: [], runs: [], reviews: [], stats: null },
+  compliance: { rules: [], stats: null },
+  feedback: { list: [], stats: null },
+  enterprise: { leaderboard: [], targets: [], rules: [], commissions: [], approvals: [], sla: [], tiers: [], users: [] },
+  help: { onboarding: [] },
+};
+
+function apiHeaders(extra) {
+  if (SALES_TOKEN) return Object.assign({}, extra || {}, { "Authorization": "Bearer " + SALES_TOKEN });
+  return Object.assign({}, extra || {}, API_KEY ? { "X-API-Key": API_KEY } : {});
+}
+
+function showLogin() {
+  const mask = document.getElementById("login-mask");
+  if (mask) mask.style.display = "flex";
+}
+
+function hideLogin() {
+  const mask = document.getElementById("login-mask");
+  if (mask) mask.style.display = "none";
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  if (!API_KEY && !SALES_TOKEN) showLogin();
+});
+
+async function fetchJSON(url) {
+  const res = await fetch(url, { headers: apiHeaders() });
+  if (res.status === 401 && SALES_TOKEN) { localStorage.removeItem("sales_token"); showLogin(); }
+  if (!res.ok) throw new Error("HTTP " + res.status + " " + url);
+  return res.json();
+}
+
+async function postJSON(url, body) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: apiHeaders({ "Content-Type": "application/json" }),
+    body: JSON.stringify(body || {}),
+  });
+  if (res.status === 401 && SALES_TOKEN) { localStorage.removeItem("sales_token"); showLogin(); }
+  if (!res.ok) throw new Error("HTTP " + res.status + " " + url);
+  return res.json();
+}
+
+function esc(value) {
+  return String(value == null ? "" : value)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+function fmt(n) {
+  if (n == null) return "0";
+  const num = Number(n);
+  return Number.isFinite(num) ? num.toLocaleString("zh-CN") : "0";
+}
+
+function bar(value, max) {
+  const pct = max > 0 ? Math.round((Number(value) || 0) / max * 100) : 0;
+  return `<div class="bar"><i style="width:${Math.max(pct, 2)}%"></i></div>`;
+}
+
+function kpi(label, value, hint) {
+  const text = typeof value === "string" ? value : fmt(value);
+  return `<div class="kpi"><div class="label">${esc(label)}</div><div class="value">${esc(text)}</div>${hint ? `<div class="hint">${esc(hint)}</div>` : ""}</div>`;
+}
+
+function showError(msg) {
+  const el = $("error");
+  el.style.display = msg ? "block" : "none";
+  el.textContent = msg || "";
+}
+
+const STATUS_LABELS = {
+  won: "已成交", lost: "已流失", paid: "已支付", draft: "草稿", pending: "待处理", sent: "已发送",
+  assigned: "已分配", claimed: "已认领", following: "跟进中", active: "启用", disabled: "停用",
+  unused: "未使用", used: "已使用", running: "运行中", paused: "已暂停", finished: "已结束",
+  resolved: "已解决", open: "待处理", processing: "处理中", closed: "已关闭", overdue: "已逾期",
+  shipped: "已发货", delivered: "已送达", issued: "已开票", cancelled: "已取消", expired: "已过期",
+  skipped: "已跳过", done: "已完成", approved: "已通过", rejected: "已拒绝", requested: "待分配",
+  qualifying: "需求确认", proposal: "方案报价", negotiation: "商务谈判", low: "低", medium: "中", high: "高",
+  urgent: "紧急", success: "成功", failure: "失败", general: "一般", trial: "试用", exchange: "退换",
+  benefit: "权益", decision: "决策", discount: "折扣", gift: "赠品", commitment: "承诺", case: "案例",
+  promise: "承诺", policy: "政策", script: "话术", timing: "时机", hook: "钩子", control: "对照组",
+  variant: "实验组", handover: "转人工", stop: "停止触达", notify: "通知", new_lead: "新线索",
+  replied: "已回复", hesitating: "犹豫", comparing: "比价", read_no_reply: "已读不回",
+  official: "公众号", wechat: "个人微信", ad: "广告", form: "表单", import: "导入", other: "其他",
+  repurchase: "复购", text: "文本", number: "数字", select: "下拉", date: "日期", textarea: "多行文本",
+  customer: "客户", lead: "线索", opportunity: "商机", quote: "报价", contract: "合同", ticket: "工单",
+  sales: "销售", admin: "管理员", manager: "主管", manual: "手动", auto: "自动", followup: "回访",
+  call: "电话", visit: "上门", auth_fail: "认证失败", admin_denied: "权限不足", update_prompt: "更新提示词",
+  create: "创建", update: "更新", delete: "删除", agent: "销售", assistant: "销售", user: "客户", system: "系统",
+  "2h": "2小时后", "1d": "1天后", "3d": "3天后", "7d": "7天后", "14d": "14天后", "30d": "30天后",
+};
+
+const STAGE_LABELS_ZH = { new: "新客户", understanding: "兴趣了解", recommended: "意向明确", quoted: "已报价",
+  high_intent: "高意向", enrolled: "已报名", after_sales: "售后", won: "已成交", lost: "流失" };
+
+function zh(value, map) {
+  const key = String(value == null ? "" : value);
+  if (map && map[key]) return map[key];
+  if (STATUS_LABELS[key]) return STATUS_LABELS[key];
+  return value == null ? "" : value;
+}
+
+function displayId(sessionId) {
+  if (!sessionId) return "-";
+  const c = (state.customers || []).find((x) => x.session_id === sessionId);
+  if (c) return c.display_id || c.nickname || ("客户" + (c.id || "")) || sessionId;
+  return sessionId;
+}
+
+function badge(status) {
+  const raw = String(status == null ? "" : status);
+  const text = STATUS_LABELS[raw] || raw;
+  const cls = ["won", "paid", "sent", "done", "success", "active", "approved", "resolved", "shipped", "delivered", "issued"].includes(raw) ? "ok"
+    : ["lost", "cancelled", "rejected", "overdue", "expired", "failed", "disabled", "refunded"].includes(raw) ? "danger"
+    : raw === "pending" ? "muted" : "warn";
+  return `<span class="badge ${cls}">${esc(text)}</span>`;
+}
+
+function switchView(name) {
+  VIEWS.forEach((v) => {
+    $("view-" + v).classList.toggle("active", v === name);
+  });
+  document.querySelectorAll("nav button[data-view]").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.view === name);
+  });
+  $("page-title").textContent = TITLES[name] || name;
+  if (name === "overview") renderOverview();
+  if (name === "customers") renderCustomers();
+  if (name === "leads") renderLeads();
+  if (name === "orders") renderOrders();
+  if (name === "followups") renderFollowup();
+  if (name === "handovers") renderHandover();
+  if (name === "quality") renderQuality();
+  if (name === "knowledge") renderKnowledge();
+  if (name === "system") renderSystem();
+  if (name === "opportunities") renderOpportunities();
+  if (name === "cpq") renderCpq();
+  if (name === "finance") renderFinance();
+  if (name === "marketing") renderMarketing();
+  if (name === "sop") renderSop();
+  if (name === "tickets") renderTickets();
+  if (name === "nurture") renderNurture();
+  if (name === "aiops") renderAiops();
+  if (name === "portraits") renderPortraits();
+  if (name === "platform") renderPlatform();
+  if (name === "official") renderOfficial();
+  if (name === "wechat") renderWechat();
+  if (name === "ammo") renderAmmo();
+  if (name === "winning") renderWinning();
+  if (name === "engagement") renderEngagement();
+  if (name === "optimization") renderOptimization();
+  if (name === "compliance") renderCompliance();
+  if (name === "feedback") renderFeedback();
+  if (name === "enterprise") renderEnterprise();
+  if (name === "help") renderHelp();
+}
+
+function renderOverview() {
+  const o = state.overview;
+  if (!o) return;
+  const alertRows = (o.alerts || []).filter((a) => Number(String(a.text).match(/\d+/)?.[0] || 0) > 0)
+    .map((a) => `<span class="badge ${a.level === "high" ? "danger" : "warn"}" style="margin-right:8px">${esc(a.text)}</span>`).join("");
+  $("overview-alerts").innerHTML = alertRows ? `<div class="box"><h2>经营预警</h2><div>${alertRows}</div></div>` : "";
+  $("overview-kpis").innerHTML =
+    kpi("客户总数", o.customers) +
+    kpi("线索总数", o.leads) +
+    kpi("高意向", o.high_intent) +
+    kpi("已成交", o.won) +
+    kpi("订单", o.orders) +
+    kpi("待跟进", o.pending_followups);
+  const maxStage = Math.max(...o.stage_counts.map((x) => x.count), 1);
+  $("overview-stages").innerHTML = `
+    <table>
+      <thead><tr><th>阶段</th><th class="num">客户数</th><th>分布</th></tr></thead>
+      <tbody>${o.stage_counts.map((x) => `
+        <tr><td>${esc(x.label)}</td><td class="num">${fmt(x.count)}</td><td style="min-width:120px">${bar(x.count, maxStage)}</td></tr>
+      `).join("") || '<tr><td colspan="3" class="empty">暂无数据</td></tr>'}</tbody>
+    </table>`;
+  const maxSource = Math.max(...Object.values(o.sources || {}), 1);
+  $("overview-sources").innerHTML = `
+    <table>
+      <thead><tr><th>渠道</th><th class="num">线索数</th><th>分布</th></tr></thead>
+      <tbody>${Object.entries(o.sources || {}).map(([k, v]) => `
+        <tr><td>${esc(zh(k))}</td><td class="num">${fmt(v)}</td><td style="min-width:120px">${bar(v, maxSource)}</td></tr>
+      `).join("") || '<tr><td colspan="3" class="empty">暂无数据</td></tr>'}</tbody>
+    </table>`;
+}
+
+async function loadOverview() {
+  const [customers, leads, orders, followup, quality, oppStats, finStats, tkStats, cpqStats] = await Promise.all([
+    fetchJSON("/api/v1/customers"),
+    fetchJSON("/api/v1/leads/stats"),
+    fetchJSON("/api/v1/orders/stats"),
+    fetchJSON("/api/v1/followups/stats"),
+    fetchJSON("/api/v1/quality/stats"),
+    fetchJSON("/api/v1/opportunities/stats"),
+    fetchJSON("/api/v1/finance/stats"),
+    fetchJSON("/api/v1/tickets/stats"),
+    fetchJSON("/api/v1/cpq/stats"),
+  ]);
+  const stageCounts = {};
+  customers.customers.forEach((c) => {
+    const s = c.stage || "new";
+    stageCounts[s] = (stageCounts[s] || 0) + 1;
+  });
+  const labels = { new: "陌生", understanding: "兴趣了解", recommended: "意向明确", high_intent: "高意向", enrolled: "已报名", won: "已成交", after_sales: "售后", lost: "流失" };
+  state.overview = {
+    customers: customers.customers.length,
+    leads: leads.total || 0,
+    high_intent: (stageCounts.high_intent || 0) + (stageCounts.enrolled || 0),
+    won: stageCounts.won || 0,
+    orders: orders.total_orders || 0,
+    pending_followups: followup.pending || 0,
+    stage_counts: Object.entries(stageCounts).map(([k, v]) => ({ label: labels[k] || k, count: v })),
+    sources: leads.by_source || {},
+    alerts: [
+      { level: "high", text: `停滞商机 ${oppStats.stale || 0} 个` },
+      { level: "high", text: `逾期应收 ¥${fmt(finStats.overdue || 0)}` },
+      { level: "medium", text: `逾期工单 ${tkStats.overdue || 0} 个` },
+      { level: "medium", text: `待审批 ${cpqStats.approvals_pending || 0} 个` },
+    ],
+  };
+  renderOverview();
+}
+
+async function loadCustomers() {
+  const data = await fetchJSON("/api/v1/customers");
+  state.customers = data.customers || [];
+  renderCustomers();
+}
+
+function renderCustomers() {
+  const keyword = ($("customer-search") ? $("customer-search").value.trim() : "").toLowerCase();
+  const filtered = state.customers.filter((c) => !keyword || [c.nickname, c.name, c.phone, c.wechat_id, c.session_id].some((v) => (v || "").toLowerCase().includes(keyword)));
+  const pg = pageSlice("customers", filtered, 20);
+  const rows = pg.rows.map((c) => `
+      <tr class="clickable" data-customer="${esc(c.session_id)}">
+        <td>${esc(c.nickname || c.name || c.display_id || ("客户" + (c.id || "")) || c.session_id)}</td>
+        <td>${esc(c.phone || "暂无")}</td>
+        <td>${esc(c.wechat_id || "暂无")}</td>
+        <td>${esc(c.goal || "暂无")}</td>
+        <td>${esc(c.budget || "暂无")}</td>
+        <td>${badge(c.intent_level || "暂无")}</td>
+        <td>${esc(zh(c.stage || "暂无", STAGE_LABELS_ZH))}</td>
+        <td>${badge(c.sales_status || "new_lead")}</td>
+        <td>${esc((c.updated_at || "").slice(0, 16))}</td>
+      </tr>`).join("");
+  $("customers-table").innerHTML = `
+    <table>
+      <thead><tr><th>客户</th><th>手机</th><th>微信</th><th>目标</th><th>预算</th><th>意向</th><th>阶段</th><th>状态</th><th>最近活跃</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="9" class="empty">暂无客户，客户达到 L3 后会自动建档</td></tr>'}</tbody>
+    </table>
+    ${pagerHTML("customers", pg.page, pg.pages, pg.total)}`;
+}
+
+async function openCustomer(sessionId) {
+  try {
+    const data = await fetchJSON("/api/v1/customer/" + encodeURIComponent(sessionId));
+    const c = data.customer;
+    if (!c) {
+      showError("未找到客户档案");
+      return;
+    }
+    let events = [];
+    try {
+      const b = await fetchJSON("/api/v1/behavior/" + encodeURIComponent(sessionId));
+      events = b.events || [];
+    } catch (e) { /* optional */ }
+    let portrait = null;
+    try {
+      portrait = await fetchJSON("/api/v1/portrait?session_id=" + encodeURIComponent(sessionId));
+    } catch (e) { /* optional */ }
+    let citations = [];
+    try {
+      const ct = await fetchJSON("/api/v1/conversations/citations?session_id=" + encodeURIComponent(sessionId));
+      citations = ct.citations || [];
+    } catch (e) { /* optional */ }
+    const fields = [
+      ["昵称", c.nickname], ["姓名", c.name], ["手机", c.phone], ["微信ID", c.wechat_id],
+      ["身份", c.identity], ["基础", c.level], ["目标", c.goal], ["预算", c.budget],
+      ["兴趣课程", c.interest], ["意向等级", c.intent_level], ["意向分", c.intent_score], ["销售阶段", zh(c.stage, STAGE_LABELS_ZH)], ["客户状态", zh(c.sales_status || "new_lead")],
+      ["来源", zh(c.source)], ["下次跟进", c.next_follow_up], ["创建时间", c.created_at], ["更新时间", c.updated_at],
+    ].map(([k, v]) => `<div class="field"><div class="k">${k}</div><div class="v">${esc(v || "暂无")}</div></div>`).join("");
+    const stageRows = (c.stage_log || []).map((s) => `
+      <tr><td>${esc(s.from_stage || "暂无")}</td><td>${esc(s.to_stage)}</td><td>${esc(s.trigger || "")}</td><td>${esc((s.created_at || "").slice(0, 16))}</td></tr>`).join("");
+    const chatRows = (c.chat_log || []).map((m) => `
+      <div class="chat-line"><div class="who">${esc(zh(m.role))} · ${esc((m.created_at || "").slice(0, 16))}</div>${esc(m.content)}<div class="toolbar" style="margin-top:4px"><button data-chat-label data-message="${esc(m.content)}">标注</button></div></div>`).join("");
+    const eventRows = events.map((e) => `
+      <tr><td>${esc(e.event_label || e.event_type)}</td><td>${esc(e.event_value || "暂无")}</td><td class="num">+${e.score}</td><td>${esc((e.created_at || "").slice(0, 16))}</td></tr>`).join("");
+    const p = portrait || {};
+    const pTags = (p.tags || []).map((t) => `<span class="badge warn" style="margin-right:6px">${esc(t.tag)}</span>`).join("") || "无";
+    const pRisks = (p.risks || []).map((r) => `<tr><td>${esc(r.risk_type)}</td><td>${badge(r.level)}</td><td>${esc(r.content)}</td><td>${badge(r.status)}</td></tr>`).join("");
+    const pPeople = (p.stakeholders || []).map((s) => `<tr><td>${esc(s.name)}</td><td>${esc(s.role)}</td><td>${esc(s.relation || "暂无")}</td><td>${esc(s.company || "暂无")}</td><td>${esc(s.influence)}</td></tr>`).join("");
+    const pOpps = (p.opportunities || []).map((o) => `<tr><td>${esc(o.name)}</td><td class="num">¥${fmt(o.amount)}</td><td>${esc(o.stage_label || o.stage)}</td><td class="num">${o.win_rate || 0}%</td></tr>`).join("");
+    const pTickets = (p.tickets || []).map((t) => `<tr><td>${esc(t.ticket_no)}</td><td>${esc(t.title)}</td><td>${badge(t.priority)}</td><td>${badge(t.status)}</td></tr>`).join("");
+    const pVisits = (p.visits || []).map((v) => `<tr><td>${esc(zh(v.visit_type))}</td><td>${esc(v.content || "暂无")}</td><td>${esc((v.next_visit_at || "").slice(0, 16) || "暂无")}</td><td>${esc(v.owner || "暂无")}</td></tr>`).join("");
+    const pSop = (state.sop.executions || []).filter((s) => s.session_id === sessionId).map((s) => `<tr><td>${esc(s.step_name)}</td><td>${esc(zh(s.stage || "暂无", STAGE_LABELS_ZH))}</td><td>${esc((s.due_at || "").slice(0, 16))}</td><td>${badge(s.status)}</td></tr>`).join("");
+    const citationRows = citations.slice(0, 10).map((x) => {
+      const srcs = (x.sources || []).map((s) => s.type === "tool" ? `[工具]${s.tool}` : `[知识]${s.source}`).join("、") || "无";
+      return `<div class="chat-line"><div class="who">${esc((x.created_at || "").slice(0, 16))} · ${srcs}</div>${esc(x.message)} → ${esc(x.reply)}</div>`;
+    }).join("");
+    $("drawer-content").innerHTML = `
+      <div class="head">
+        <div><h2>${esc(c.nickname || c.name || c.display_id || ("客户" + (c.id || "")) || c.session_id)}</h2><div class="muted">${esc(c.display_id || c.nickname || ("客户" + (c.id || "")) || c.session_id)}</div><div id="drawer-session" hidden>${esc(c.session_id)}</div></div>
+        <button id="drawer-close" type="button">关闭</button>
+      </div>
+      <div class="toolbar">
+        <button type="button" data-customer-action="followup">创建跟进计划</button>
+        <button type="button" data-customer-action="quality">执行质检</button>
+        <button type="button" data-customer-action="handover">转人工</button>
+        <button type="button" data-customer-action="order">新建订单</button>
+        <button type="button" data-customer-action="edit">编辑档案</button>
+      </div>
+      <div class="box"><h2>基本信息</h2><div class="profile-grid">${fields}</div></div>
+      <div class="box" id="drawer-edit-box">
+        <h2>编辑档案</h2>
+        <div class="profile-grid">
+          <div class="field"><div class="k">姓名</div><input id="edit-name" value="${esc(c.name || "")}"></div>
+          <div class="field"><div class="k">昵称</div><input id="edit-nickname" value="${esc(c.nickname || "")}"></div>
+          <div class="field"><div class="k">手机</div><input id="edit-phone" value="${esc(c.phone || "")}"></div>
+          <div class="field"><div class="k">微信</div><input id="edit-wechat" value="${esc(c.wechat_id || "")}"></div>
+          <div class="field"><div class="k">身份</div><input id="edit-identity" value="${esc(c.identity || "")}"></div>
+          <div class="field"><div class="k">基础</div><input id="edit-level" value="${esc(c.level || "")}"></div>
+          <div class="field"><div class="k">目标</div><input id="edit-goal" value="${esc(c.goal || "")}"></div>
+          <div class="field"><div class="k">预算</div><input id="edit-budget" value="${esc(c.budget || "")}"></div>
+          <div class="field"><div class="k">兴趣课程</div><input id="edit-interest" value="${esc(c.interest || "")}"></div>
+          <div class="field"><div class="k">意向等级</div><input id="edit-intent" value="${esc(c.intent_level || "")}"></div>
+          <div class="field"><div class="k">下次跟进</div><input id="edit-next" value="${esc(c.next_follow_up || "")}"></div>
+          <div class="field"><div class="k">备注</div><textarea id="edit-notes" style="width:100%">${esc(c.notes || "")}</textarea></div>
+        </div>
+        <div class="toolbar"><button id="customer-save" type="button" class="primary">保存档案</button></div>
+      </div>
+      <div class="box"><h2>阶段记录</h2><table><thead><tr><th>从</th><th>到</th><th>触发</th><th>时间</th></tr></thead><tbody>${stageRows || '<tr><td colspan="4" class="empty">暂无阶段记录</td></tr>'}</tbody></table></div>
+      <div class="box"><h2>最近聊天</h2>${chatRows || '<div class="empty">暂无聊天记录</div>'}</div>
+      <div class="box"><h2>引用溯源与工具记录</h2>${citationRows || '<div class="empty">暂无记录</div>'}</div>
+      <div class="box"><h2>行为事件</h2><table><thead><tr><th>事件</th><th>值</th><th class="num">加分</th><th>时间</th></tr></thead><tbody>${eventRows || '<tr><td colspan="4" class="empty">暂无行为事件</td></tr>'}</tbody></table></div>
+      <div class="box"><h2>360标签与风险</h2><div class="profile-grid"><div class="field"><div class="k">标签</div><div class="v">${pTags}</div></div></div><table><thead><tr><th>风险类型</th><th>等级</th><th>内容</th><th>状态</th></tr></thead><tbody>${pRisks || '<tr><td colspan="4" class="empty">暂无风险事件</td></tr>'}</tbody></table></div>
+      <div class="box"><h2>干系人</h2><table><thead><tr><th>姓名</th><th>角色</th><th>关系</th><th>公司</th><th>影响力</th></tr></thead><tbody>${pPeople || '<tr><td colspan="5" class="empty">暂无干系人</td></tr>'}</tbody></table></div>
+      <div class="grid-2">
+        <div class="box"><h2>商机</h2><table><thead><tr><th>名称</th><th class="num">金额</th><th>阶段</th><th class="num">赢率</th></tr></thead><tbody>${pOpps || '<tr><td colspan="4" class="empty">暂无商机</td></tr>'}</tbody></table></div>
+        <div class="box"><h2>工单</h2><table><thead><tr><th>工单号</th><th>标题</th><th>优先级</th><th>状态</th></tr></thead><tbody>${pTickets || '<tr><td colspan="4" class="empty">暂无工单</td></tr>'}</tbody></table></div>
+      </div>
+      <div class="grid-2">
+        <div class="box"><h2>回访</h2><table><thead><tr><th>类型</th><th>内容</th><th>下次</th><th>负责人</th></tr></thead><tbody>${pVisits || '<tr><td colspan="4" class="empty">暂无回访</td></tr>'}</tbody></table></div>
+        <div class="box"><h2>SOP执行</h2><table><thead><tr><th>步骤</th><th>阶段</th><th>到期</th><th>状态</th></tr></thead><tbody>${pSop || '<tr><td colspan="4" class="empty">暂无SOP</td></tr>'}</tbody></table></div>
+      </div>
+    `;
+    openDrawer();
+  } catch (e) {
+    showError("加载客户档案失败：" + e.message);
+  }
+}
+
+async function loadLeads() {
+  const status = $("lead-status-filter").value;
+  const keyword = $("lead-keyword").value.trim();
+  const params = new URLSearchParams();
+  if (status) params.set("status", status);
+  if (keyword) params.set("keyword", keyword);
+  const qs = params.toString() ? "?" + params.toString() : "";
+  const [list, stats] = await Promise.all([
+    fetchJSON("/api/v1/leads" + qs),
+    fetchJSON("/api/v1/leads/stats"),
+  ]);
+  state.leads = { list: list.leads || [], stats };
+  renderLeads();
+}
+
+function renderLeads() {
+  const stats = state.leads.stats || {};
+  const pg = pageSlice("leads", state.leads.list, 30);
+  const rows = pg.rows.map((l) => {
+    const contact = l.phone || l.wechat_id || l.unionid || "暂无";
+    const actions = [];
+    if (l.status === "pending") actions.push(`<button data-lead="${l.id}" data-action="claim">认领</button>`);
+    if (l.status !== "won" && l.status !== "lost") actions.push(`<button data-lead="${l.id}" data-action="follow">跟进</button>`);
+    if (l.status !== "won" && l.status !== "lost") actions.push(`<button data-lead="${l.id}" data-action="won">成交</button>`);
+    if (l.status !== "lost") actions.push(`<button data-lead="${l.id}" data-action="lost">流失</button>`);
+    return `
+      <tr>
+        <td><input type="checkbox" class="lead-check" value="${l.id}"></td><td>${l.id}</td>
+        <td>${esc(l.name || l.nickname || "未命名")}</td>
+        <td>${esc(contact)}</td>
+        <td>${esc(zh(l.source || "暂无"))}</td>
+        <td>${esc(l.channel_id || "暂无")}</td>
+        <td>${esc(l.intent_level || "暂无")}</td>
+        <td>${badge(l.status)}</td>
+        <td>${esc(l.owner || "暂无")}</td>
+        <td>${esc((l.updated_at || "").slice(0, 16))}</td>
+        <td><div class="lead-actions">${actions.join("") || "暂无"}</div></td>
+      </tr>`;
+  }).join("");
+  $("leads-table").innerHTML = `
+    <table>
+      <thead><tr><th></th><th>编号</th><th>姓名/昵称</th><th>联系方式</th><th>来源</th><th>广告位/活码</th><th>意向</th><th>状态</th><th>归属人</th><th>更新时间</th><th>操作</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="11" class="empty">暂无线索</td></tr>'}</tbody>
+    </table>
+    ${pagerHTML("leads", pg.page, pg.pages, pg.total)}`;
+}
+
+async function loadOrders() {
+  const [stats, orders, afterSales] = await Promise.all([
+    fetchJSON("/api/v1/orders/stats"),
+    fetchJSON("/api/v1/orders"),
+    fetchJSON("/api/v1/after-sales"),
+  ]);
+  state.orders = { stats, orders: orders.orders || [], after_sales: afterSales.after_sales || [] };
+  renderOrders();
+}
+
+function renderOrders() {
+  const stats = state.orders.stats || {};
+  $("orders-kpis").innerHTML =
+    kpi("订单总数", stats.total_orders) +
+    kpi("已支付", stats.paid_orders) +
+    kpi("已支付金额", "¥" + fmt(stats.paid_amount)) +
+    kpi("售后", stats.after_sales);
+  const pg = pageSlice("orders", state.orders.orders, 20);
+  const rows = pg.rows.map((o) => {
+    const actions = [];
+    if (o.status === "draft") actions.push(`<button data-pay="${o.id}">支付</button>`);
+    if (o.status === "paid") actions.push(`<button data-after="${o.id}">售后</button>`);
+    return `
+      <tr>
+        <td>${esc(o.order_no)}</td>
+        <td>${esc(o.customer_name || "暂无")}</td>
+        <td>${esc(o.phone || "暂无")}</td>
+        <td>${esc(o.product_name || "暂无")}</td>
+        <td class="num">¥${fmt(o.amount)}</td>
+        <td>${badge(o.status)}</td>
+        <td>${esc(o.pay_method || "暂无")}</td>
+        <td>${esc((o.created_at || "").slice(0, 16))}</td>
+        <td><div class="lead-actions">${actions.join("") || "暂无"}</div></td>
+      </tr>`;
+  }).join("");
+  $("orders-table").innerHTML = `
+    <table>
+      <thead><tr><th>订单号</th><th>客户</th><th>手机</th><th>产品</th><th class="num">金额</th><th>状态</th><th>支付方式</th><th>创建时间</th><th>操作</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="9" class="empty">暂无订单</td></tr>'}</tbody>
+    </table>` + pagerHTML("orders", pg.page, pg.pages, pg.total);
+  const afterRows = state.orders.after_sales.map((a) => `
+    <tr><td>${a.id}</td><td>${a.order_id}</td><td>${esc(a.reason || "暂无")}</td><td>${badge(a.status)}</td><td>${esc(a.handler || "暂无")}</td><td>${esc((a.created_at || "").slice(0, 16))}</td></tr>`).join("");
+  $("after-sales-table").innerHTML = `
+    <table>
+      <thead><tr><th>编号</th><th>订单ID</th><th>原因</th><th>状态</th><th>处理人</th><th>时间</th></tr></thead>
+      <tbody>${afterRows || '<tr><td colspan="6" class="empty">暂无售后</td></tr>'}</tbody>
+    </table>`;
+}
+
+async function loadFollowup() {
+  const [stats, tasks] = await Promise.all([
+    fetchJSON("/api/v1/followups/stats"),
+    fetchJSON("/api/v1/followups/tasks"),
+  ]);
+  state.followup = { stats, tasks: tasks.tasks || [] };
+  renderFollowup();
+}
+
+function renderFollowup() {
+  const stats = state.followup.stats || {};
+  $("followup-kpis").innerHTML =
+    kpi("待发送", stats.pending) + kpi("已发送", stats.sent) + kpi("任务总数", stats.total);
+  const pg = pageSlice("followups", state.followup.tasks, 30);
+  const rows = pg.rows.map((t) => `
+    <tr><td>${esc(zh(t.node_label))}</td><td>${esc(displayId(t.session_id))}</td><td>${esc(zh(t.channel || "暂无"))}</td><td>${esc(t.due_at || "暂无")}</td><td>${badge(t.status)}</td><td>${esc(t.content || "")}</td></tr>`).join("");
+  $("followup-table").innerHTML = `
+    <table>
+      <thead><tr><th>节点</th><th>客户ID</th><th>通道</th><th>到期时间</th><th>状态</th><th>内容</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="6" class="empty">暂无跟进计划</td></tr>'}</tbody>
+    </table>` + pagerHTML("followups", pg.page, pg.pages, pg.total);
+}
+
+async function loadHandover() {
+  const [list, stats] = await Promise.all([
+    fetchJSON("/api/v1/handovers"),
+    fetchJSON("/api/v1/handovers/stats"),
+  ]);
+  state.handover = { list: list.handovers || [], stats };
+  renderHandover();
+}
+
+function renderHandover() {
+  const stats = state.handover.stats || {};
+  $("handover-kpis").innerHTML =
+    kpi("请求总数", stats.total) + kpi("待处理", (stats.by_status || {}).requested || 0) + kpi("已分配", (stats.by_status || {}).assigned || 0);
+  const rows = state.handover.list.map((h) => {
+    const actions = [];
+    if (h.status === "requested") actions.push(`<button data-handover="${h.id}" data-action="assign">分配叙白</button>`);
+    if (h.status !== "done") actions.push(`<button data-handover="${h.id}" data-action="complete">完成</button>`);
+    return `
+      <tr>
+        <td>${h.id}</td>
+        <td>${esc(displayId(h.session_id))}</td>
+        <td>${esc(h.source || "暂无")}</td>
+        <td>${esc(h.reason || "暂无")}</td>
+        <td>${badge(h.status)}</td>
+        <td>${esc(h.owner || "暂无")}</td>
+        <td>${esc((h.created_at || "").slice(0, 16))}</td>
+        <td><div class="lead-actions">${actions.join("") || "暂无"}</div></td>
+      </tr>`;
+  }).join("");
+  $("handover-table").innerHTML = `
+    <table>
+      <thead><tr><th>编号</th><th>客户ID</th><th>来源</th><th>原因</th><th>状态</th><th>负责人</th><th>时间</th><th>操作</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="8" class="empty">暂无转人工请求</td></tr>'}</tbody>
+    </table>`;
+}
+
+async function loadQuality() {
+  const [stats, reports] = await Promise.all([
+    fetchJSON("/api/v1/quality/stats"),
+    fetchJSON("/api/v1/quality/reports"),
+  ]);
+  state.quality = { stats, reports: reports.reports || [] };
+  renderQuality();
+}
+
+function renderQuality() {
+  const stats = state.quality.stats || {};
+  $("quality-kpis").innerHTML =
+    kpi("质检次数", stats.total) + kpi("平均分", stats.avg_score) +
+    kpi("需改进", (stats.by_score || {})["需改进"] || 0) + kpi("问题数", stats.issue_count);
+  const rows = state.quality.reports.map((r) => `
+    <tr><td>${r.id}</td><td>${esc(r.session_id || r.customer_id || "暂无")}</td><td class="num">${r.score}</td><td class="num">${r.sop_score}</td><td class="num">${r.tone_score}</td><td>${esc((r.issues || "暂无").split("\n")[0])}</td><td>${esc((r.created_at || "").slice(0, 16))}</td></tr>`).join("");
+  $("quality-table").innerHTML = `
+    <table>
+      <thead><tr><th>编号</th><th>客户</th><th class="num">总分</th><th class="num">SOP</th><th class="num">语气</th><th>问题</th><th>时间</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="7" class="empty">暂无质检记录</td></tr>'}</tbody>
+    </table>`;
+}
+
+async function loadKnowledge() {
+  const [stats, files, versions] = await Promise.all([
+    fetchJSON("/api/v1/knowledge/stats"),
+    fetchJSON("/api/v1/knowledge/files"),
+    fetchJSON("/api/v1/knowledge/versions"),
+  ]);
+  state.knowledge = { stats, files: files.files || [], versions: versions.versions || [] };
+  renderKnowledge();
+}
+
+function renderKnowledge() {
+  const stats = state.knowledge.stats || {};
+  $("knowledge-kpis").innerHTML =
+    kpi("文件数", stats.source_files) + kpi("向量块", stats.vector_count) + kpi("支持格式", (stats.supported_formats || []).length);
+  const rows = state.knowledge.files.map((f) => `
+    <tr><td>${esc(f.name)}</td><td class="num">${fmt(f.size)}</td><td>${esc(new Date(f.modified * 1000).toLocaleString("zh-CN"))}</td></tr>`).join("");
+  $("knowledge-files").innerHTML = `
+    <table>
+      <thead><tr><th>文件名</th><th class="num">大小</th><th>更新时间</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="3" class="empty">暂无知识文件</td></tr>'}</tbody>
+    </table>`;
+  const versionRows = state.knowledge.versions.map((v) => `
+    <tr><td>${esc(v.filename)}</td><td class="num">${v.version}</td><td>${esc((v.file_hash || "").slice(0, 12))}</td><td class="num">${fmt(v.size)}</td><td>${badge(v.status || (v.active ? "approved" : "pending"))}</td><td>${esc((v.created_at || "").slice(0, 16))}</td><td><div class="lead-actions">${(v.status || "pending") === "pending" ? `<button data-kv-approve="${v.id}">通过</button><button data-kv-reject="${v.id}">拒绝</button>` : ""}</div></td></tr>`).join("");
+  $("knowledge-versions").innerHTML = `
+    <table>
+      <thead><tr><th>文件名</th><th class="num">版本</th><th>指纹</th><th class="num">大小</th><th>状态</th><th>时间</th><th>操作</th></tr></thead>
+      <tbody>${versionRows || '<tr><td colspan="7" class="empty">暂无版本记录</td></tr>'}</tbody>
+    </table>`;
+}
+
+async function loadSystem() {
+  try {
+    const params = new URLSearchParams();
+    if ($("audit-level") && $("audit-level").value) params.set("level", $("audit-level").value);
+    if ($("audit-category") && $("audit-category").value) params.set("category", $("audit-category").value);
+    const qs = params.toString() ? "?" + params.toString() : "";
+    const data = await fetchJSON("/api/v1/audit" + qs);
+    state.system = { logs: data.logs || [] };
+  } catch (e) {
+    state.system = { logs: [] };
+  }
+  renderSystem();
+}
+
+async function loadPrompt() {
+  try {
+    const data = await fetchJSON("/api/v1/system/prompt");
+    state.system.prompt = data.content || "";
+    const el = $("prompt-editor");
+    if (el) el.value = state.system.prompt;
+  } catch (e) { /* optional */ }
+}
+
+function renderSystem() {
+  const rows = state.system.logs.map((l) => `
+    <tr><td>${esc(l.time || "暂无")}</td><td>${esc(l.actor)}</td><td>${esc(zh(l.action))}</td><td>${badge(l.level || "info")}</td><td>${esc(l.category || "system")}</td><td>${esc(l.resource || "暂无")}</td><td>${esc(l.detail || "暂无")}</td></tr>`).join("");
+  $("audit-table").innerHTML = `
+    <table>
+      <thead><tr><th>时间</th><th>操作人</th><th>动作</th><th>级别</th><th>类型</th><th>资源</th><th>详情</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="7" class="empty">暂无审计日志</td></tr>'}</tbody>
+    </table>`;
+}
+
+function openDrawer() {
+  $("drawer-mask").classList.add("open");
+  $("drawer").classList.add("open");
+}
+
+function closeDrawer() {
+  $("drawer-mask").classList.remove("open");
+  $("drawer").classList.remove("open");
+}
+
+async function downloadCSV(url, filename) {
+  try {
+    const res = await fetch(url, { headers: apiHeaders() });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const blob = await res.blob();
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  } catch (e) {
+    showError("导出失败：" + e.message);
+  }
+}
+
+async function loadFeedback() {
+  const status = $("feedback-status").value;
+  const params = new URLSearchParams();
+  if (status) params.set("status", status);
+  const qs = params.toString() ? "?" + params.toString() : "";
+  const [list, summary] = await Promise.all([
+    fetchJSON("/api/v1/feedback" + qs),
+    fetchJSON("/api/v1/feedback/summary"),
+  ]);
+  state.feedback = { list: list.items || [], stats: summary };
+  renderFeedback();
+}
+
+function renderFeedback() {
+  const s = state.feedback.stats || {};
+  $("feedback-kpis").innerHTML =
+    kpi("总标注", s.total) + kpi("待处理", s.open) + kpi("回复差", s.bad) + kpi("已回灌", (s.total - s.open) || 0);
+  const rows = state.feedback.list.map((f) => `
+    <tr>
+      <td>${esc(f.session_id || "-")}</td>
+      <td>${esc((f.message || "").slice(0, 40))}</td>
+      <td>${esc((f.reply || "").slice(0, 60))}</td>
+      <td>${badge(f.rating)}</td>
+      <td>${esc(f.issue_type || "暂无")}</td>
+      <td>${esc((f.standard_reply || "").slice(0, 60) || "暂无")}</td>
+      <td>${badge(f.status)}</td>
+      <td><div class="lead-actions">
+        <button data-feedback="standard" data-id="${f.id}">标准话术</button>
+        <button data-feedback="backfill" data-id="${f.id}">回灌</button>
+        <button data-feedback="close" data-id="${f.id}">关闭</button>
+      </div></td>
+    </tr>`).join("");
+  $("feedback-table").innerHTML = `
+    <table><thead><tr><th>客户</th><th>客户发言</th><th>AI回复</th><th>评价</th><th>问题类型</th><th>标准话术</th><th>状态</th><th>操作</th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="8" class="empty">暂无标注，可在客户档案的聊天记录里点“标注”</td></tr>'}</tbody></table>`;
+}
+
+async function loadRouter() {
+  try {
+    const s = await fetchJSON("/api/v1/system/llm-router");
+    $("router-output").textContent = JSON.stringify(s, null, 2);
+  } catch (e) { showError("模型路由状态失败：" + e.message); }
+}
+
+async function loadTraces() {
+  try {
+    const data = await fetchJSON("/api/v1/system/llm-traces?limit=20");
+    const s = data.summary || {};
+    $("trace-summary").textContent = `共${s.traces}次 / ${s.total_tokens} tokens / ¥${s.total_cost_yuan} / 平均${s.avg_latency_ms}ms`;
+    const rows = (data.traces || []).map((t) => `<tr><td>${esc(t.session_id)}</td><td>${esc(t.model)}</td><td class="num">${t.prompt_tokens}</td><td class="num">${t.completion_tokens}</td><td class="num">${t.latency_ms}ms</td><td class="num">¥${t.cost_yuan}</td><td>${esc((t.created_at || "").slice(0, 16))}</td></tr>`).join("");
+    $("trace-table").innerHTML = `<table><thead><tr><th>客户</th><th>模型</th><th class="num">输入</th><th class="num">输出</th><th class="num">耗时</th><th class="num">成本</th><th>时间</th></tr></thead><tbody>${rows || '<tr><td colspan="7" class="empty">暂无记录</td></tr>'}</tbody></table>`;
+  } catch (e) { showError("LLM记录加载失败：" + e.message); }
+}
+
+async function loadBlocklist() {
+  try {
+    const data = await fetchJSON("/api/v1/security/blocklist");
+    const rows = (data.items || []).map((b) => `<tr><td>${esc(b.session_id)}</td><td>${esc(b.reason || "暂无")}</td><td>${esc(b.created_at)}</td><td><button data-unblock="${esc(b.session_id)}">解除</button></td></tr>`).join("");
+    $("block-table").innerHTML = `<table><thead><tr><th>客户ID</th><th>原因</th><th>时间</th><th>操作</th></tr></thead><tbody>${rows || '<tr><td colspan="4" class="empty">暂无黑名单</td></tr>'}</tbody></table>`;
+  } catch (e) { showError("黑名单加载失败：" + e.message); }
+}
+
+async function loadGaps() {
+  try {
+    const data = await fetchJSON("/api/v1/knowledge/gaps");
+    const rows = (data.items || []).map((g) => `<tr><td>${esc(g.question)}</td><td>${esc(g.created_at)}</td><td><button data-gap-del="${g.id}">删除</button></td></tr>`).join("");
+    $("knowledge-gaps").innerHTML = `<table><thead><tr><th>问题</th><th>时间</th><th>操作</th></tr></thead><tbody>${rows || '<tr><td colspan="3" class="empty">暂无缺口</td></tr>'}</tbody></table>`;
+  } catch (e) { /* optional */ }
+}
+
+async function loadPromptVersions() {
+  try {
+    const data = await fetchJSON("/api/v1/system/prompt/versions");
+    const rows = (data.versions || []).map((v) => `<tr><td>#${v.id}</td><td>${esc((v.note || "") + " · " + (v.created_at || ""))}</td><td><button data-prompt-rollback="${v.id}">回滚</button></td></tr>`).join("");
+    $("prompt-version-list").innerHTML = `<table><thead><tr><th>版本</th><th>说明</th><th>操作</th></tr></thead><tbody>${rows || '<tr><td colspan="3" class="empty">暂无版本</td></tr>'}</tbody></table>`;
+  } catch (e) { /* optional */ }
+}
+
+async function loadEnterprise() {
+  const [lb, targets, rules, commissions, approvals, sla, tiers, users] = await Promise.all([
+    fetchJSON("/api/v1/team/leaderboard"), fetchJSON("/api/v1/team/targets"),
+    fetchJSON("/api/v1/team/commission-rules"), fetchJSON("/api/v1/team/commissions"),
+    fetchJSON("/api/v1/approval/rules"), fetchJSON("/api/v1/sla/policies"),
+    fetchJSON("/api/v1/customer-tiers"), fetchJSON("/api/v1/accounts/users"),
+  ]);
+  state.enterprise = {
+    leaderboard: lb.items || [], targets: targets.items || [], rules: rules.items || [],
+    commissions: commissions.items || [], approvals: approvals.items || [],
+    sla: sla.items || [], tiers: tiers.items || [], users: users.items || [],
+  };
+  renderEnterprise();
+}
+
+function renderEnterprise() {
+  const e = state.enterprise;
+  const totalAmount = e.leaderboard.reduce((s, x) => s + Number(x.amount || 0), 0);
+  $("enterprise-kpis").innerHTML = kpi("团队成员", e.leaderboard.length) + kpi("成交金额", "¥" + fmt(totalAmount)) + kpi("业绩目标", e.targets.length) + kpi("待发佣金", e.commissions.filter((x) => x.status === "pending").length);
+  const table = (rows, headers, cols) => `<table><thead><tr>${headers.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map(cols).join("") || `<tr><td colspan="${headers.length}" class="empty">暂无</td></tr>`}</tbody></table>`;
+  $("leaderboard-table").innerHTML = table(e.leaderboard, ["成员", "订单", "金额"], (x) => `<tr><td>${esc(x.member)}</td><td class="num">${x.orders}</td><td class="num">¥${fmt(x.amount)}</td></tr>`);
+  $("target-table").innerHTML = table(e.targets, ["成员", "周期", "类型", "目标"], (x) => `<tr><td>${esc(x.member)}</td><td>${esc(x.period)}</td><td>${esc(x.target_type)}</td><td class="num">¥${fmt(x.amount)}</td></tr>`);
+  $("rule-table").innerHTML = table(e.rules, ["规则", "类型", "值"], (x) => `<tr><td>${esc(x.name)}</td><td>${esc(x.rule_type)}</td><td class="num">${x.value}${x.rule_type === "percent" ? "%" : "元"}</td></tr>`);
+  $("commission-table").innerHTML = table(e.commissions, ["订单", "成员", "金额", "佣金", "状态"], (x) => `<tr><td>${x.order_id}</td><td>${esc(x.member)}</td><td class="num">¥${fmt(x.order_amount)}</td><td class="num">¥${fmt(x.commission)}</td><td>${badge(x.status)}</td></tr>`);
+  $("approval-rule-table").innerHTML = table(e.approvals, ["类型", "规则", "条件", "阈值", "审批人", "操作"], (x) => `<tr><td>${esc(x.biz_type)}</td><td>${esc(x.name)}</td><td>${esc(x.condition_key)}</td><td class="num">${x.threshold}</td><td>${esc(x.approver)}</td><td><button data-approval-rule-del="${x.id}">删除</button></td></tr>`);
+  $("sla-table").innerHTML = table(e.sla, ["优先级", "策略", "解决时限"], (x) => `<tr><td>${esc(x.priority)}</td><td>${esc(x.name)}</td><td class="num">${x.resolve_hours}h</td></tr>`);
+  $("tier-table").innerHTML = table(e.tiers, ["等级", "名称", "最低消费"], (x) => `<tr><td>${esc(x.tier)}</td><td>${esc(x.name)}</td><td class="num">¥${fmt(x.min_amount)}</td></tr>`);
+  $("user-table").innerHTML = table(e.users, ["账号", "姓名", "角色", "状态", "操作"], (x) => `<tr><td>${esc(x.username)}</td><td>${esc(x.name || "-")}</td><td>${esc(x.role)}</td><td>${badge(x.status)}</td><td><button data-user-toggle="${x.id}" data-status="${x.status === "active" ? "disabled" : "active"}">${x.status === "active" ? "停用" : "启用"}</button></td></tr>`);
+}
+
+async function loadHelp() {
+  try {
+    const data = await fetchJSON("/api/v1/system/onboarding");
+    state.help = { onboarding: data.items || [] };
+  } catch (e) { state.help = { onboarding: [] }; }
+  renderHelp();
+}
+
+function renderHelp() {
+  const items = state.help.onboarding || [];
+  $("onboarding-list").innerHTML = items.map((i) => `<div class="field"><div class="k">${i.ok ? "✔" : "○"} ${esc(i.label)}</div><div class="v">${esc(i.detail)}</div></div>`).join("") || '<div class="empty">暂无</div>';
+  const modules = [
+    ["总览", "看整体经营指标"], ["客户档案", "查看/编辑客户，一键跟进/质检/转人工"],
+    ["线索管理", "导入线索、公海回收、批量成交"], ["订单售后", "新建订单、支付、售后"],
+    ["自动跟进", "创建跟进计划、派发到期任务"], ["质检陪练", "质检打分 + AI陪练"],
+    ["知识库投喂", "上传知识、审批版本、重建向量"], ["话术弹药库", "产品/异议/竞品/跟进话术"],
+    ["赢单引擎", "差异点、证据库"], ["企业运营", "账号、业绩佣金、审批、SLA"],
+  ];
+  $("module-help").innerHTML = `<table><thead><tr><th>栏目</th><th>作用</th></tr></thead><tbody>${modules.map(([n, d]) => `<tr><td>${esc(n)}</td><td>${esc(d)}</td></tr>`).join("")}</tbody></table>`;
+}
+
+async function loadCompliancePanel() {
+  const sid = $("consent-session").value.trim();
+  try {
+    const [consents, requests] = await Promise.all([
+      fetchJSON("/api/v1/compliance/consents?session_id=" + encodeURIComponent(sid || "")),
+      fetchJSON("/api/v1/compliance/deletion-requests"),
+    ]);
+    $("consent-list").innerHTML = `<table><thead><tr><th>客户</th><th>来源</th><th>内容</th><th>状态</th><th>时间</th></tr></thead><tbody>${(consents.items || []).map((c) => `<tr><td>${esc(c.session_id)}</td><td>${esc(c.source)}</td><td>${esc(c.content)}</td><td>${badge(c.status)}</td><td>${esc(c.created_at)}</td></tr>`).join("") || '<tr><td colspan="5" class="empty">暂无授权记录</td></tr>'}</tbody></table>`;
+    $("deletion-list").innerHTML = `<table><thead><tr><th>编号</th><th>客户</th><th>申请人</th><th>原因</th><th>状态</th><th>操作</th></tr></thead><tbody>${(requests.items || []).map((r) => `<tr><td>${r.id}</td><td>${esc(r.session_id)}</td><td>${esc(r.applicant || "-")}</td><td>${esc(r.reason || "-")}</td><td>${badge(r.status)}</td><td>${r.status === "pending" ? `<button data-del-confirm="${r.id}">确认删除</button>` : ""}</td></tr>`).join("") || '<tr><td colspan="6" class="empty">暂无删除申请</td></tr>'}</tbody></table>`;
+  } catch (e) { showError("合规数据加载失败：" + e.message); }
+}
+
+async function loadAll() {
+  showError("");
+  showLoading(true);
+  try {
+    await Promise.all([
+      loadOverview(), loadCustomers(), loadLeads(), loadOrders(), loadFollowup(),
+      loadHandover(), loadQuality(), loadKnowledge(), loadSystem(),
+      loadOpportunities(), loadCpq(), loadFinance(), loadMarketing(), loadSop(),
+      loadTickets(), loadNurture(), loadAiops(), loadPlatform(), loadOfficial(),
+      loadWechat(),
+      loadAmmo(), loadWinning(), loadEngagement(), loadOptimization(), loadCompliance(), loadFeedback(),
+      loadPrompt(), loadGaps(), loadPromptVersions(), loadEnterprise(), loadHelp(), loadCompliancePanel(),
+    ]);
+    $("updated").textContent = "更新于 " + new Date().toLocaleString("zh-CN");
+  } catch (e) {
+    showError("加载失败：" + e.message);
+  }
+  showLoading(false);
+}
+
+document.querySelectorAll("nav button[data-view]").forEach((btn) => {
+  btn.addEventListener("click", () => switchView(btn.dataset.view));
+});
+$("refresh").addEventListener("click", loadAll);
+$("set-api-key").addEventListener("click", () => {
+  const key = prompt("请输入接口 API Key（留空清除）", API_KEY || "");
+  if (key === null) return;
+  localStorage.setItem("sales_api_key", key.trim());
+  location.reload();
+});
+$("customer-search-btn").addEventListener("click", renderCustomers);
+$("customer-search").addEventListener("keydown", (e) => { if (e.key === "Enter") renderCustomers(); });
+$("lead-import").addEventListener("click", async () => {
+  const file = $("lead-file").files && $("lead-file").files[0];
+  if (!file) return showError("请先选择要导入的 CSV / Excel 文件");
+  const form = new FormData();
+  form.append("file", file);
+  try {
+    const res = await fetch("/api/v1/leads/import", { method: "POST", headers: apiHeaders(), body: form });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    alert(`导入完成：新增 ${data.created}，更新 ${data.updated}，失败 ${data.failed}`);
+    $("lead-file").value = "";
+    await loadLeads();
+  } catch (e) { showError("导入失败：" + e.message); }
+});
+$("lead-template").addEventListener("click", () => downloadCSV("/api/v1/leads/import/template", "leads_template.csv"));
+$("lead-recycle").addEventListener("click", async () => {
+  try {
+    const data = await postJSON("/api/v1/leads/recycle", {});
+    alert(`公海回收完成：${data.recycled} 条`);
+    await loadLeads();
+  } catch (e) { showError("回收失败：" + e.message); }
+});
+$("lead-search").addEventListener("click", loadLeads);
+$("lead-status-filter").addEventListener("change", loadLeads);
+$("lead-keyword").addEventListener("keydown", (e) => { if (e.key === "Enter") loadLeads(); });
+$("order-create").addEventListener("click", async () => {
+  try {
+    await postJSON("/api/v1/orders", {
+      customer_name: $("order-name").value.trim(),
+      phone: $("order-phone").value.trim(),
+      product_name: $("order-product").value.trim(),
+      amount: Number($("order-amount").value || 0),
+      session_id: $("order-session").value.trim(),
+    });
+    ["order-name", "order-phone", "order-product", "order-amount", "order-session"].forEach((id) => $("" + id).value = "");
+    await loadOrders();
+  } catch (e) { showError("创建订单失败：" + e.message); }
+});
+$("followup-plan").addEventListener("click", async () => {
+  try {
+    const data = await postJSON("/api/v1/followups/plan", { session_id: $("followup-session").value.trim() });
+    alert(`已创建 ${data.created} 条跟进任务`);
+    await loadFollowup();
+  } catch (e) { showError("创建跟进计划失败：" + e.message); }
+});
+$("followup-dispatch").addEventListener("click", async () => {
+  try {
+    const data = await postJSON("/api/v1/followups/dispatch", {});
+    alert(`已派发 ${data.sent} 条到期跟进`);
+    await loadFollowup();
+  } catch (e) { showError("派发跟进失败：" + e.message); }
+});
+$("quality-check").addEventListener("click", async () => {
+  try {
+    const data = await postJSON("/api/v1/quality/check", { session_id: $("quality-session").value.trim() });
+    if (!data.report) alert("未找到客户档案，质检前需要客户达到 L3");
+    await loadQuality();
+  } catch (e) { showError("质检失败：" + e.message); }
+});
+$("coach-generate").addEventListener("click", async () => {
+  try {
+    const data = await postJSON("/api/v1/quality/coach", { stage: $("coach-stage").value });
+    $("coach-output").textContent = "陪练客户：" + (data.message || "");
+  } catch (e) { showError("生成陪练失败：" + e.message); }
+});
+$("knowledge-upload").addEventListener("click", async () => {
+  const file = $("knowledge-file").files && $("knowledge-file").files[0];
+  if (!file) return showError("请先选择知识库文件");
+  const form = new FormData();
+  form.append("file", file);
+  try {
+    const res = await fetch("/api/v1/knowledge/upload", { method: "POST", headers: apiHeaders(), body: form });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    alert(`上传成功：${data.filename}，已进入待审批，审批通过并重建后生效`);
+    $("knowledge-file").value = "";
+    await loadKnowledge();
+  } catch (e) { showError("知识库上传失败：" + e.message); }
+});
+$("knowledge-rebuild").addEventListener("click", async () => {
+  try {
+    const data = await postJSON("/api/v1/knowledge/rebuild", {});
+    alert(`重建完成：导入 ${data.imported} 个文档块`);
+    await loadKnowledge();
+  } catch (e) { showError("重建失败：" + e.message); }
+});
+$("knowledge-add-text").addEventListener("click", async () => {
+  const content = $("knowledge-text").value.trim();
+  if (!content) return;
+  try {
+    await postJSON("/api/v1/knowledge/text", { content });
+    $("knowledge-text").value = "";
+    await loadKnowledge();
+  } catch (e) { showError("添加知识失败：" + e.message); }
+});
+
+$("feedback-search").addEventListener("click", loadFeedback);
+$("feedback-status").addEventListener("change", loadFeedback);
+document.addEventListener("click", async (e) => {
+  const fbBtn = e.target.closest("button[data-feedback]");
+  if (fbBtn) {
+    const id = fbBtn.dataset.id;
+    const action = fbBtn.dataset.feedback;
+    try {
+      if (action === "standard") {
+        const v = prompt("填写标准话术");
+        if (v === null) return;
+        await fetch(`/api/v1/feedback/${id}`, { method: "PATCH", headers: apiHeaders({ "Content-Type": "application/json" }), body: JSON.stringify({ standard_reply: v }) });
+      } else if (action === "backfill") {
+        const data = await postJSON(`/api/v1/feedback/${id}/backfill`, {});
+        toast(data.ok ? "已回灌话术弹药库" : (data.error || "回灌失败"), data.ok ? "ok" : "warn");
+      } else if (action === "close") {
+        await fetch(`/api/v1/feedback/${id}`, { method: "PATCH", headers: apiHeaders({ "Content-Type": "application/json" }), body: JSON.stringify({ status: "closed" }) });
+      }
+      await loadFeedback();
+    } catch (err) { showError("标注操作失败：" + err.message); }
+    return;
+  }
+  const labelBtn = e.target.closest("button[data-chat-label]");
+  if (labelBtn) {
+    const rating = prompt("回复质量（好/差）", "差");
+    if (rating === null) return;
+    const issueType = prompt("问题类型（可留空）", "");
+    if (issueType === null) return;
+    const standard = prompt("标准话术（可留空）", "");
+    if (standard === null) return;
+    const sessionEl = document.getElementById("drawer-session");
+    const sessionId = sessionEl ? sessionEl.textContent.trim() : "";
+    try {
+      await postJSON("/api/v1/feedback", { session_id: sessionId, message: labelBtn.dataset.message, reply: "", rating: rating === "好" ? "good" : "bad", issue_type: issueType || "", standard_reply: standard || "" });
+      toast("已添加标注", "ok");
+    } catch (err) { showError("标注失败：" + err.message); }
+    return;
+  }
+});
+
+document.addEventListener("click", async (e) => {
+  const kvBtn = e.target.closest("button[data-kv-approve], button[data-kv-reject]");
+  if (!kvBtn) return;
+  const id = kvBtn.dataset.kvApprove || kvBtn.dataset.kvReject;
+  const action = kvBtn.dataset.kvApprove ? "approve" : "reject";
+  try {
+    await postJSON(`/api/v1/knowledge/versions/${id}/${action}`, {});
+    toast(action === "approve" ? "已通过审批" : "已拒绝", "ok");
+    await loadKnowledge();
+  } catch (err) { showError("审批操作失败：" + err.message); }
+});
+
+$("router-status").addEventListener("click", loadRouter);
+$("router-auto").addEventListener("click", async () => { await postJSON("/api/v1/system/llm-router", { model: "auto" }); await loadRouter(); });
+$("router-primary").addEventListener("click", async () => { await postJSON("/api/v1/system/llm-router", { model: "primary" }); await loadRouter(); });
+$("router-backup").addEventListener("click", async () => { await postJSON("/api/v1/system/llm-router", { model: "backup" }); await loadRouter(); });
+$("trace-refresh").addEventListener("click", loadTraces);
+$("block-add").addEventListener("click", async () => {
+  const sid = $("block-session").value.trim();
+  if (!sid) return;
+  try {
+    await postJSON("/api/v1/security/blocklist", { session_id: sid, reason: $("block-reason").value.trim() });
+    $("block-session").value = ""; $("block-reason").value = "";
+    await loadBlocklist();
+  } catch (e) { showError("拉黑失败：" + e.message); }
+});
+$("prompt-versions").addEventListener("click", loadPromptVersions);
+$("prompt-regression").addEventListener("click", async () => {
+  $("prompt-regression-output").textContent = "正在跑回归测试，请稍等...";
+  try {
+    const data = await postJSON("/api/v1/system/prompt/regression", {});
+    $("prompt-regression-output").textContent = (data.results || []).map((r) => `${r.question}\n→ ${r.reply}\n`).join("\n");
+  } catch (e) { showError("回归测试失败：" + e.message); }
+});
+document.addEventListener("click", async (e) => {
+  const unblock = e.target.closest("button[data-unblock]");
+  if (unblock) { try { await fetch("/api/v1/security/blocklist/" + encodeURIComponent(unblock.dataset.unblock), { method: "DELETE", headers: apiHeaders() }); await loadBlocklist(); } catch (err) { showError("解除失败：" + err.message); } return; }
+  const gapDel = e.target.closest("button[data-gap-del]");
+  if (gapDel) { try { await fetch("/api/v1/knowledge/gaps/" + gapDel.dataset.gapDel, { method: "DELETE", headers: apiHeaders() }); await loadGaps(); } catch (err) { showError("删除失败：" + err.message); } return; }
+  const rollback = e.target.closest("button[data-prompt-rollback]");
+  if (rollback) { try { await postJSON("/api/v1/system/prompt/versions/" + rollback.dataset.promptRollback + "/rollback", {}); await loadPromptVersions(); await loadPrompt(); toast("已回滚提示词", "ok"); } catch (err) { showError("回滚失败：" + err.message); } return; }
+});
+
+$("target-add").addEventListener("click", async () => {
+  try {
+    await postJSON("/api/v1/team/targets", { member: $("target-member").value.trim(), period: $("target-period").value.trim(), amount: Number($("target-amount").value || 0) });
+    ["target-member", "target-period", "target-amount"].forEach((id) => $(id).value = "");
+    await loadEnterprise();
+  } catch (e) { showError("添加目标失败：" + e.message); }
+});
+$("rule-add").addEventListener("click", async () => {
+  try {
+    await postJSON("/api/v1/team/commission-rules", { name: $("rule-name").value.trim(), value: Number($("rule-value").value || 0) });
+    ["rule-name", "rule-value"].forEach((id) => $(id).value = "");
+    await loadEnterprise();
+  } catch (e) { showError("添加规则失败：" + e.message); }
+});
+$("commission-compute").addEventListener("click", async () => {
+  try {
+    const data = await postJSON("/api/v1/team/commissions/compute", {});
+    toast(`已计算 ${data.created} 条佣金`, "ok");
+    await loadEnterprise();
+  } catch (e) { showError("计算佣金失败：" + e.message); }
+});
+$("approval-rule-add").addEventListener("click", async () => {
+  try {
+    await postJSON("/api/v1/approval/rules", { biz_type: $("rule-biz").value, name: $("rule-name2").value.trim(), condition_key: $("rule-key").value, threshold: Number($("rule-threshold").value || 0), approver: $("rule-approver").value.trim() || "主管" });
+    ["rule-name2", "rule-threshold", "rule-approver"].forEach((id) => $(id).value = "");
+    await loadEnterprise();
+  } catch (e) { showError("添加审批规则失败：" + e.message); }
+});
+$("sla-add").addEventListener("click", async () => {
+  try {
+    await postJSON("/api/v1/sla/policies", { priority: $("sla-priority").value, name: $("sla-name").value.trim(), resolve_hours: Number($("sla-hours").value || 24) });
+    ["sla-name", "sla-hours"].forEach((id) => $(id).value = "");
+    await loadEnterprise();
+  } catch (e) { showError("添加SLA失败：" + e.message); }
+});
+$("tier-add").addEventListener("click", async () => {
+  try {
+    await postJSON("/api/v1/customer-tiers", { tier: $("tier-name").value.trim(), name: $("tier-name").value.trim(), min_amount: Number($("tier-min").value || 0) });
+    ["tier-name", "tier-min"].forEach((id) => $(id).value = "");
+    await loadEnterprise();
+  } catch (e) { showError("添加等级失败：" + e.message); }
+});
+$("user-add").addEventListener("click", async () => {
+  try {
+    const data = await postJSON("/api/v1/accounts/users", { username: $("user-name").value.trim(), password: $("user-pass").value.trim(), role: $("user-role").value.trim() || "sales" });
+    toast(data.ok ? "账号已创建" : (data.error || "创建失败"), data.ok ? "ok" : "warn");
+    ["user-name", "user-pass", "user-role"].forEach((id) => $(id).value = "");
+    await loadEnterprise();
+  } catch (e) { showError("创建账号失败：" + e.message); }
+});
+document.addEventListener("click", async (e) => {
+  const del = e.target.closest("button[data-approval-rule-del]");
+  if (del) { try { await fetch("/api/v1/approval/rules/" + del.dataset.approvalRuleDel, { method: "DELETE", headers: apiHeaders() }); await loadEnterprise(); } catch (err) { showError("删除失败：" + err.message); } return; }
+  const toggle = e.target.closest("button[data-user-toggle]");
+  if (toggle) { try { await fetch(`/api/v1/accounts/users/${toggle.dataset.userToggle}/status`, { method: "PATCH", headers: apiHeaders({ "Content-Type": "application/json" }), body: JSON.stringify({ status: toggle.dataset.status }) }); await loadEnterprise(); } catch (err) { showError("操作失败：" + err.message); } return; }
+});
+
+$("audit-search").addEventListener("click", loadSystem);
+$("audit-level").addEventListener("change", loadSystem);
+$("audit-category").addEventListener("change", loadSystem);
+$("backup-remote").addEventListener("click", async () => {
+  try {
+    const data = await postJSON("/api/v1/system/backup/remote", {});
+    toast(data.ok ? `归档成功 ${data.uploaded} 个文件` : (data.error || "归档失败"), data.ok ? "ok" : "warn");
+    $("storage-status").textContent = JSON.stringify(data);
+  } catch (e) { showError("归档失败：" + e.message); }
+});
+$("erase-btn").addEventListener("click", async () => {
+  const sid = $("erase-session").value.trim();
+  if (!sid) return showError("请填写客户ID");
+  if (!confirm("确认删除该客户的全部数据？此操作不可恢复")) return;
+  try {
+    const data = await postJSON("/api/v1/customer/" + encodeURIComponent(sid) + "/erase", {});
+    toast(data.erased ? "客户数据已删除" : (data.error || "删除失败"), data.erased ? "ok" : "warn");
+    $("erase-session").value = "";
+  } catch (e) { showError("删除失败：" + e.message); }
+});
+
+const loginBtn = document.getElementById("login-btn");
+if (loginBtn) loginBtn.addEventListener("click", async () => {
+  const username = document.getElementById("login-user").value.trim();
+  const password = document.getElementById("login-pass").value;
+  try {
+    const res = await fetch("/api/v1/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, password }) });
+    const data = await res.json();
+    if (!data.ok) { document.getElementById("login-error").textContent = data.error || "登录失败"; return; }
+    localStorage.setItem("sales_token", data.token);
+    location.reload();
+  } catch (e) { document.getElementById("login-error").textContent = "登录失败：" + e.message; }
+});
+const loginApiKeyBtn = document.getElementById("login-api-key");
+if (loginApiKeyBtn) loginApiKeyBtn.addEventListener("click", () => {
+  const key = prompt("请输入接口 API Key");
+  if (key === null) return;
+  localStorage.setItem("sales_api_key", key.trim());
+  localStorage.removeItem("sales_token");
+  location.reload();
+});
+const logoutBtn = document.getElementById("logout-btn");
+if (logoutBtn) logoutBtn.addEventListener("click", () => {
+  localStorage.removeItem("sales_token");
+  localStorage.removeItem("sales_api_key");
+  location.reload();
+});
+function connectWS() {
+  if (!SALES_TOKEN && !API_KEY) return;
+  try {
+    const proto = location.protocol === "https:" ? "wss:" : "ws:";
+    const ws = new WebSocket(proto + "//" + location.host + "/ws/notifications");
+    ws.onmessage = (ev) => {
+      try {
+        const data = JSON.parse(ev.data);
+        if (data.type === "notification") { refreshNotify(); toast(data.content || "新通知", "ok"); }
+      } catch (e) {}
+    };
+    ws.onclose = () => setTimeout(connectWS, 5000);
+  } catch (e) { setTimeout(connectWS, 10000); }
+}
+setTimeout(connectWS, 2000);
+
+$("consent-query").addEventListener("click", loadCompliancePanel);
+document.addEventListener("click", async (e) => {
+  const del = e.target.closest("button[data-del-confirm]");
+  if (!del) return;
+  if (!confirm("确认执行该客户数据删除？此操作不可恢复")) return;
+  try {
+    const data = await postJSON(`/api/v1/compliance/deletion-requests/${del.dataset.delConfirm}/confirm`, {});
+    toast(data.ok ? "已删除并回执" : (data.error || "失败"), data.ok ? "ok" : "warn");
+    await loadCompliancePanel();
+  } catch (err) { showError("执行失败：" + err.message); }
+});
+
+const selfCheckBtn = document.getElementById("self-check");
+if (selfCheckBtn) {
+  selfCheckBtn.addEventListener("click", async () => {
+    try {
+      const data = await fetchJSON("/api/v1/system/self-check");
+      const rows = (data.checks || []).map((c) => `<tr><td>${esc(c.name)}</td><td>${c.ok ? '<span class="badge ok">正常</span>' : '<span class="badge danger">异常</span>'}</td><td>${esc(c.detail)}</td></tr>`).join("");
+      $("system-check-output").innerHTML = `<table><thead><tr><th>项目</th><th>状态</th><th>详情</th></tr></thead><tbody>${rows || '<tr><td colspan="3" class="empty">暂无结果</td></tr>'}</tbody></table>`;
+    } catch (e) { showError("自检失败：" + e.message); }
+  });
+}
+const backupNowBtn = document.getElementById("backup-now");
+if (backupNowBtn) {
+  backupNowBtn.addEventListener("click", async () => {
+    try {
+      const data = await postJSON("/api/v1/system/backup", {});
+      toast("备份完成：" + (data.dir || ""), "ok");
+    } catch (e) { showError("备份失败：" + e.message); }
+  });
+}
+
+document.addEventListener("click", async (e) => {
+  const customerRow = e.target.closest("tr[data-customer]");
+  if (customerRow) { openCustomer(customerRow.dataset.customer); return; }
+  const leadBtn = e.target.closest("button[data-lead]");
+  if (leadBtn) {
+    const id = Number(leadBtn.dataset.lead);
+    const action = leadBtn.dataset.action;
+    try {
+      if (action === "follow") {
+        const note = prompt("跟进备注（可留空）");
+        if (note === null) return;
+        await postJSON(`/api/v1/leads/${id}/follow`, { note: note || "" });
+      } else if (action === "claim") {
+        await postJSON(`/api/v1/leads/${id}/claim`, {});
+      } else {
+        await postJSON(`/api/v1/leads/${id}/status`, { status: action });
+      }
+      await loadLeads();
+    } catch (err) { showError("线索操作失败：" + err.message); }
+    return;
+  }
+  const payBtn = e.target.closest("button[data-pay]");
+  if (payBtn) {
+    try {
+      await postJSON(`/api/v1/orders/${payBtn.dataset.pay}/pay`, { method: "wechat" });
+      await loadOrders();
+    } catch (err) { showError("支付确认失败：" + err.message); }
+    return;
+  }
+  const afterBtn = e.target.closest("button[data-after]");
+  if (afterBtn) {
+    const reason = prompt("售后原因");
+    if (reason === null) return;
+    try {
+      await postJSON(`/api/v1/orders/${afterBtn.dataset.after}/after-sale`, { reason });
+      await loadOrders();
+    } catch (err) { showError("售后创建失败：" + err.message); }
+    return;
+  }
+  const handoverBtn = e.target.closest("button[data-handover]");
+  if (handoverBtn) {
+    const id = Number(handoverBtn.dataset.handover);
+    const action = handoverBtn.dataset.action;
+    try {
+      if (action === "assign") await postJSON(`/api/v1/handovers/${id}/assign`, { owner: "" });
+      else await postJSON(`/api/v1/handovers/${id}/complete`, {});
+      await loadHandover();
+    } catch (err) { showError("转人工操作失败：" + err.message); }
+    return;
+  }
+  const exportBtn = e.target.closest("button[data-export]");
+  if (exportBtn) { downloadCSV(exportBtn.dataset.export, exportBtn.dataset.name); return; }
+  const customerAction = e.target.closest("button[data-customer-action]");
+  if (customerAction) {
+    const action = customerAction.dataset.customerAction;
+    const sessionEl = document.getElementById("drawer-session");
+    const sessionId = sessionEl ? sessionEl.textContent.trim() : "";
+    try {
+      if (action === "followup") {
+        const data = await postJSON("/api/v1/followups/plan", { session_id: sessionId });
+        alert(`已创建 ${data.created} 条跟进任务`);
+      } else if (action === "quality") {
+        const data = await postJSON("/api/v1/quality/check", { session_id: sessionId });
+        alert(data.report ? `质检完成，得分 ${data.report.score}` : "未找到客户档案");
+        await loadQuality();
+      } else if (action === "handover") {
+        const data = await postJSON("/api/v1/handovers/request", { session_id: sessionId, source: "official" });
+        alert(`转人工请求已创建 #${data.id}`);
+        await loadHandover();
+      } else if (action === "order") {
+        const product = prompt("产品/课程名称");
+        if (product === null) return;
+        const amount = Number(prompt("金额") || 0);
+        await postJSON("/api/v1/orders", { session_id: sessionId, product_name: product, amount });
+        await loadOrders();
+      } else if (action === "edit") {
+        const box = document.getElementById("drawer-edit-box");
+        if (box) box.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    } catch (err) { showError("客户操作失败：" + err.message); }
+  }
+});
+$("drawer-mask").addEventListener("click", closeDrawer);
+document.addEventListener("click", (e) => {
+  if (e.target.closest("#drawer-close")) closeDrawer();
+});
+async function loadOpportunities() {
+  const [list, stats] = await Promise.all([
+    fetchJSON("/api/v1/opportunities"),
+    fetchJSON("/api/v1/opportunities/stats"),
+  ]);
+  state.opportunities = { list: list.opportunities || [], stats };
+  renderOpportunities();
+}
+
+function renderOpportunities() {
+  const stats = state.opportunities.stats || {};
+  $("opportunity-kpis").innerHTML =
+    kpi("商机总数", stats.total) +
+    kpi("管道金额", "¥" + fmt(stats.pipeline)) +
+    kpi("已赢单", "¥" + fmt(stats.won_amount)) +
+    kpi("停滞预警", stats.stale);
+  const pg = pageSlice("opportunities", state.opportunities.list, 20);
+  const rows = pg.rows.map((o) => `
+    <tr>
+      <td>${o.id}</td>
+      <td>${esc(o.name)}</td>
+      <td>${esc(displayId(o.session_id))}</td>
+      <td>${esc(o.product_name || "暂无")}</td>
+      <td class="num">¥${fmt(o.amount)}</td>
+      <td>${esc(o.stage_label || o.stage)}</td>
+      <td class="num">${o.win_rate || 0}%</td>
+      <td>${esc(o.owner || "暂无")}</td>
+      <td>${badge(o.risk_level || "low")}</td>
+      <td>${esc((o.expected_close_at || "").slice(0, 10) || "暂无")}</td>
+      <td>${esc((o.updated_at || "").slice(0, 16))}</td>
+      <td><div class="lead-actions">
+        <button data-opp-action="advance" data-id="${o.id}">推进</button>
+        <button data-opp-action="predict" data-id="${o.id}">预测</button>
+        <button data-opp-action="won" data-id="${o.id}">赢单</button>
+        <button data-opp-action="lost" data-id="${o.id}">输单</button>
+      </div></td>
+    </tr>`).join("");
+  $("opportunity-table").innerHTML = `
+    <table>
+      <thead><tr><th>编号</th><th>商机</th><th>客户</th><th>产品</th><th class="num">金额</th><th>阶段</th><th class="num">赢率</th><th>负责人</th><th>风险</th><th>预计成交</th><th>更新</th><th>操作</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="12" class="empty">暂无商机</td></tr>'}</tbody>
+    </table>` + pagerHTML("opportunities", pg.page, pg.pages, pg.total);
+}
+
+async function loadCpq() {
+  const [items, quotes, contracts, approvals, stats] = await Promise.all([
+    fetchJSON("/api/v1/price-items"),
+    fetchJSON("/api/v1/quotes"),
+    fetchJSON("/api/v1/contracts"),
+    fetchJSON("/api/v1/approvals"),
+    fetchJSON("/api/v1/cpq/stats"),
+  ]);
+  state.cpq = {
+    items: items.items || [], quotes: quotes.quotes || [], contracts: contracts.contracts || [],
+    approvals: approvals.approvals || [], stats,
+  };
+  renderCpq();
+}
+
+function renderCpq() {
+  const stats = state.cpq.stats || {};
+  $("cpq-kpis").innerHTML =
+    kpi("报价数", stats.quotes) +
+    kpi("报价金额", "¥" + fmt(stats.quote_amount)) +
+    kpi("合同数", stats.contracts) +
+    kpi("合同金额", "¥" + fmt(stats.contract_amount)) +
+    kpi("待审批", stats.approvals_pending);
+  const priceRows = state.cpq.items.map((i) => `
+    <tr><td>${i.id}</td><td>${esc(i.product_name)}</td><td>${esc(i.sku || "暂无")}</td><td class="num">¥${fmt(i.price)}</td><td>${i.active ? "启用" : "停用"}</td></tr>`).join("");
+  $("price-table").innerHTML = `
+    <table><thead><tr><th>编号</th><th>产品</th><th>商品编号</th><th class="num">价格</th><th>状态</th></tr></thead>
+    <tbody>${priceRows || '<tr><td colspan="5" class="empty">暂无价目</td></tr>'}</tbody></table>`;
+  const quoteRows = state.cpq.quotes.map((q) => `
+    <tr>
+      <td>${esc(q.quote_no)}</td>
+      <td>${esc(q.customer_name || "暂无")}</td>
+      <td>${esc(q.product_name || "暂无")}</td>
+      <td class="num">¥${fmt(q.base_amount)}</td>
+      <td class="num">${q.discount_rate || 0}%</td>
+      <td class="num">¥${fmt(q.total_amount)}</td>
+      <td>${badge(q.status)}</td>
+      <td class="num">v${q.version}</td>
+      <td><div class="lead-actions">
+        <button data-quote-action="approving" data-id="${q.id}">送审</button>
+        <button data-quote-action="approved" data-id="${q.id}">通过</button>
+        <button data-quote-action="rejected" data-id="${q.id}">拒绝</button>
+        <button data-quote-action="accepted" data-id="${q.id}">客户接受</button>
+      </div></td>
+    </tr>`).join("");
+  $("quote-table").innerHTML = `
+    <table><thead><tr><th>报价单</th><th>客户</th><th>产品</th><th class="num">原价</th><th class="num">折扣</th><th class="num">总额</th><th>状态</th><th class="num">版本</th><th>操作</th></tr></thead>
+    <tbody>${quoteRows || '<tr><td colspan="9" class="empty">暂无报价</td></tr>'}</tbody></table>`;
+  const contractRows = state.cpq.contracts.map((c) => `
+    <tr>
+      <td>${esc(c.contract_no)}</td>
+      <td>${esc(c.customer_name || "暂无")}</td>
+      <td>${esc(c.product_name || "暂无")}</td>
+      <td class="num">¥${fmt(c.amount)}</td>
+      <td>${badge(c.status)}</td>
+      <td>${badge(c.risk_level || "low")}</td>
+      <td>${esc((c.expires_at || "").slice(0, 10) || "暂无")}</td>
+      <td><div class="lead-actions">
+        <button data-contract-action="approving" data-id="${c.id}">送审</button>
+        <button data-contract-action="approved" data-id="${c.id}">通过</button>
+        <button data-contract-action="signed" data-id="${c.id}">签署</button>
+      </div></td>
+    </tr>`).join("");
+  $("contract-table").innerHTML = `
+    <table><thead><tr><th>合同号</th><th>客户</th><th>产品</th><th class="num">金额</th><th>状态</th><th>风险</th><th>到期</th><th>操作</th></tr></thead>
+    <tbody>${contractRows || '<tr><td colspan="8" class="empty">暂无合同</td></tr>'}</tbody></table>`;
+  const approvalRows = state.cpq.approvals.map((a) => `
+    <tr>
+      <td>${a.id}</td>
+      <td>${esc(a.biz_type)}</td>
+      <td>${a.biz_id}</td>
+      <td>${esc(a.requester || "暂无")}</td>
+      <td>${esc(a.approver || "暂无")}</td>
+      <td>${badge(a.status)}</td>
+      <td>${esc(a.comment || "暂无")}</td>
+      <td><div class="lead-actions">
+        <button data-approval-action="approved" data-id="${a.id}">通过</button>
+        <button data-approval-action="rejected" data-id="${a.id}">拒绝</button>
+      </div></td>
+    </tr>`).join("");
+  $("approval-table").innerHTML = `
+    <table><thead><tr><th>编号</th><th>类型</th><th>业务ID</th><th>发起人</th><th>审批人</th><th>状态</th><th>意见</th><th>操作</th></tr></thead>
+    <tbody>${approvalRows || '<tr><td colspan="8" class="empty">暂无审批</td></tr>'}</tbody></table>`;
+}
+
+async function loadFinance() {
+  const [shipments, invoices, plans, receivables, stats] = await Promise.all([
+    fetchJSON("/api/v1/shipments"),
+    fetchJSON("/api/v1/invoices"),
+    fetchJSON("/api/v1/payment-plans"),
+    fetchJSON("/api/v1/receivables"),
+    fetchJSON("/api/v1/finance/stats"),
+  ]);
+  state.finance = {
+    shipments: shipments.shipments || [], invoices: invoices.invoices || [],
+    plans: plans.plans || [], receivables: receivables.receivables || [], stats,
+  };
+  renderFinance();
+}
+
+function renderFinance() {
+  const stats = state.finance.stats || {};
+  $("finance-kpis").innerHTML =
+    kpi("应收", "¥" + fmt(stats.outstanding)) +
+    kpi("已回款", "¥" + fmt(stats.received)) +
+    kpi("逾期", "¥" + fmt(stats.overdue)) +
+    kpi("待发货", stats.shipments_pending) +
+    kpi("已开票", stats.invoices_paid);
+  const shipRows = state.finance.shipments.map((s) => `
+    <tr><td>${s.id}</td><td>${s.order_id}</td><td>${esc(s.carrier || "暂无")}</td><td>${esc(s.tracking_no || "暂无")}</td><td>${badge(s.status)}</td>
+    <td><div class="lead-actions"><button data-ship-action="shipped" data-id="${s.id}">发货</button><button data-ship-action="delivered" data-id="${s.id}">送达</button></div></td></tr>`).join("");
+  $("shipment-table").innerHTML = `
+    <table><thead><tr><th>编号</th><th>订单</th><th>承运商</th><th>运单号</th><th>状态</th><th>操作</th></tr></thead>
+    <tbody>${shipRows || '<tr><td colspan="6" class="empty">暂无发货</td></tr>'}</tbody></table>`;
+  const invoiceRows = state.finance.invoices.map((i) => `
+    <tr><td>${esc(i.invoice_no)}</td><td>${i.order_id}</td><td class="num">¥${fmt(i.amount)}</td><td>${esc(i.title || "暂无")}</td><td>${badge(i.status)}</td>
+    <td><div class="lead-actions"><button data-invoice-action="issued" data-id="${i.id}">开票</button><button data-invoice-action="paid" data-id="${i.id}">已付款</button></div></td></tr>`).join("");
+  $("invoice-table").innerHTML = `
+    <table><thead><tr><th>发票号</th><th>订单</th><th class="num">金额</th><th>抬头</th><th>状态</th><th>操作</th></tr></thead>
+    <tbody>${invoiceRows || '<tr><td colspan="6" class="empty">暂无发票</td></tr>'}</tbody></table>`;
+  const planRows = state.finance.plans.map((p) => `
+    <tr><td>${p.id}</td><td>${p.order_id}</td><td>${esc(p.plan_no || "暂无")}</td><td class="num">¥${fmt(p.amount)}</td><td>${esc((p.due_at || "").slice(0, 16))}</td><td>${badge(p.status)}</td></tr>`).join("");
+  $("plan-table").innerHTML = `
+    <table><thead><tr><th>编号</th><th>订单</th><th>计划</th><th class="num">金额</th><th>到期</th><th>状态</th></tr></thead>
+    <tbody>${planRows || '<tr><td colspan="6" class="empty">暂无回款计划</td></tr>'}</tbody></table>`;
+  const receivableRows = state.finance.receivables.map((r) => `
+    <tr><td>${r.id}</td><td>${r.order_id}</td><td class="num">¥${fmt(r.amount)}</td><td class="num">¥${fmt(r.received_amount)}</td><td>${esc((r.due_at || "").slice(0, 10))}</td><td>${badge(r.status)}</td>
+    <td><button data-receivable="${r.id}">核销</button></td></tr>`).join("");
+  $("receivable-table").innerHTML = `
+    <table><thead><tr><th>编号</th><th>订单</th><th class="num">应收</th><th class="num">已收</th><th>到期</th><th>状态</th><th>操作</th></tr></thead>
+    <tbody>${receivableRows || '<tr><td colspan="7" class="empty">暂无应收</td></tr>'}</tbody></table>`;
+}
+
+async function loadMarketing() {
+  const [campaigns, metrics, repurchases, stats] = await Promise.all([
+    fetchJSON("/api/v1/campaigns"),
+    fetchJSON("/api/v1/ad-metrics"),
+    fetchJSON("/api/v1/repurchases"),
+    fetchJSON("/api/v1/marketing/stats"),
+  ]);
+  state.marketing = {
+    campaigns: campaigns.campaigns || [], metrics: metrics.metrics || [],
+    repurchases: repurchases.plans || [], stats,
+  };
+  renderMarketing();
+}
+
+function renderMarketing() {
+  const stats = state.marketing.stats || {};
+  $("marketing-kpis").innerHTML =
+    kpi("活动数", stats.campaigns) +
+    kpi("运行中", stats.running) +
+    kpi("广告成本", "¥" + fmt(stats.cost)) +
+    kpi("广告收入", "¥" + fmt(stats.revenue)) +
+    kpi("ROI", stats.roi) +
+    kpi("待复购", stats.repurchases_pending);
+  const campaignRows = state.marketing.campaigns.map((c) => `
+    <tr><td>${c.id}</td><td>${esc(c.name)}</td><td>${esc(zh(c.channel))}</td><td class="num">¥${fmt(c.budget)}</td><td>${badge(c.status)}</td>
+    <td><div class="lead-actions"><button data-campaign-action="running" data-id="${c.id}">启动</button><button data-campaign-action="paused" data-id="${c.id}">暂停</button><button data-campaign-action="finished" data-id="${c.id}">结束</button></div></td></tr>`).join("");
+  $("campaign-table").innerHTML = `
+    <table><thead><tr><th>编号</th><th>活动</th><th>渠道</th><th class="num">预算</th><th>状态</th><th>操作</th></tr></thead>
+    <tbody>${campaignRows || '<tr><td colspan="6" class="empty">暂无活动</td></tr>'}</tbody></table>`;
+  const adRows = state.marketing.metrics.map((m) => `
+    <tr><td>${m.id}</td><td>${m.campaign_id}</td><td>${esc(m.metric_date)}</td><td class="num">${fmt(m.impressions)}</td><td class="num">${fmt(m.clicks)}</td><td class="num">${fmt(m.conversions)}</td><td class="num">¥${fmt(m.cost)}</td><td class="num">¥${fmt(m.revenue)}</td><td class="num">${m.roi}</td></tr>`).join("");
+  $("ad-table").innerHTML = `
+    <table><thead><tr><th>编号</th><th>活动</th><th>日期</th><th class="num">曝光</th><th class="num">点击</th><th class="num">转化</th><th class="num">成本</th><th class="num">收入</th><th class="num">ROI</th></tr></thead>
+    <tbody>${adRows || '<tr><td colspan="9" class="empty">暂无广告指标</td></tr>'}</tbody></table>`;
+  const rpRows = state.marketing.repurchases.map((r) => `
+    <tr><td>${r.id}</td><td>${esc(displayId(r.session_id))}</td><td>${esc(r.product_name || "暂无")}</td><td>${esc((r.plan_date || "").slice(0, 10))}</td><td>${badge(r.status)}</td><td>${esc(r.note || "暂无")}</td></tr>`).join("");
+  $("rp-table").innerHTML = `
+    <table><thead><tr><th>编号</th><th>客户</th><th>产品</th><th>计划日期</th><th>状态</th><th>备注</th></tr></thead>
+    <tbody>${rpRows || '<tr><td colspan="6" class="empty">暂无复购计划</td></tr>'}</tbody></table>`;
+}
+
+async function loadSop() {
+  const [templates, executions, stats] = await Promise.all([
+    fetchJSON("/api/v1/sop/templates"),
+    fetchJSON("/api/v1/sop/executions"),
+    fetchJSON("/api/v1/sop/stats"),
+  ]);
+  state.sop = { templates: templates.templates || [], executions: executions.executions || [], stats };
+  renderSop();
+}
+
+function renderSop() {
+  const stats = state.sop.stats || {};
+  $("sop-kpis").innerHTML =
+    kpi("步骤总数", stats.total) +
+    kpi("已完成", stats.done) +
+    kpi("待执行", stats.pending) +
+    kpi("已逾期", stats.overdue) +
+    kpi("执行率", stats.completion_rate + "%");
+  const templateRows = state.sop.templates.map((t) => `
+    <tr><td>${t.id}</td><td>${esc(t.name)}</td><td>${esc(t.stage || "暂无")}</td><td class="num">${(t.steps || []).length}</td><td>${t.active ? "启用" : "停用"}</td>
+    <td><button data-sop-start="${t.id}">下发执行</button></td></tr>`).join("");
+  $("sop-template-table").innerHTML = `
+    <table><thead><tr><th>编号</th><th>名称</th><th>阶段</th><th class="num">步骤</th><th>状态</th><th>操作</th></tr></thead>
+    <tbody>${templateRows || '<tr><td colspan="6" class="empty">暂无SOP模板</td></tr>'}</tbody></table>`;
+  const execRows = state.sop.executions.map((e) => `
+    <tr><td>${e.id}</td><td>${esc(e.template_id)}</td><td>${esc(e.step_name)}</td><td>${esc(zh(e.stage || "暂无"))}</td><td>${esc(displayId(e.session_id))}</td><td>${esc((e.due_at || "").slice(0, 16))}</td><td>${badge(e.status)}</td>
+    <td><div class="lead-actions"><button data-sop-exec="done" data-id="${e.id}">完成</button><button data-sop-exec="skip" data-id="${e.id}">跳过</button></div></td></tr>`).join("");
+  $("sop-exec-table").innerHTML = `
+    <table><thead><tr><th>编号</th><th>模板</th><th>步骤</th><th>阶段</th><th>客户</th><th>到期</th><th>状态</th><th>操作</th></tr></thead>
+    <tbody>${execRows || '<tr><td colspan="8" class="empty">暂无执行记录</td></tr>'}</tbody></table>`;
+}
+
+async function loadTickets() {
+  const [tickets, visits, stats] = await Promise.all([
+    fetchJSON("/api/v1/tickets"),
+    fetchJSON("/api/v1/visits"),
+    fetchJSON("/api/v1/tickets/stats"),
+  ]);
+  state.tickets = { tickets: tickets.tickets || [], visits: visits.visits || [], stats };
+  renderTickets();
+}
+
+function renderTickets() {
+  const stats = state.tickets.stats || {};
+  $("ticket-kpis").innerHTML =
+    kpi("工单总数", stats.total) +
+    kpi("处理中", stats.processing) +
+    kpi("已逾期", stats.overdue) +
+    kpi("平均解决", stats.avg_resolve_hours + "h") +
+    kpi("回访记录", stats.visits);
+  const pg = pageSlice("tickets", state.tickets.tickets, 20);
+  const ticketRows = pg.rows.map((t) => `
+    <tr><td>${esc(t.ticket_no)}</td><td>${esc(t.title)}</td><td>${esc(displayId(t.session_id))}</td><td>${badge(t.priority)}</td><td>${badge(t.status)}</td><td>${esc(t.owner || "暂无")}</td><td>${esc((t.sla_due_at || "").slice(0, 16))}</td>
+    <td><div class="lead-actions"><button data-ticket-action="processing" data-id="${t.id}">处理</button><button data-ticket-action="resolved" data-id="${t.id}">解决</button><button data-ticket-action="closed" data-id="${t.id}">关闭</button></div></td></tr>`).join("");
+  $("ticket-table").innerHTML = `
+    <table><thead><tr><th>工单号</th><th>标题</th><th>客户</th><th>优先级</th><th>状态</th><th>负责人</th><th>SLA到期</th><th>操作</th></tr></thead>
+    <tbody>${ticketRows || '<tr><td colspan="8" class="empty">暂无工单</td></tr>'}</tbody></table>` + pagerHTML("tickets", pg.page, pg.pages, pg.total);
+  const visitRows = state.tickets.visits.map((v) => `
+    <tr><td>${v.id}</td><td>${esc(displayId(v.session_id))}</td><td>${esc(zh(v.visit_type))}</td><td>${esc(v.content || "暂无")}</td><td>${esc((v.next_visit_at || "").slice(0, 16) || "暂无")}</td><td>${esc(v.owner || "暂无")}</td></tr>`).join("");
+  $("visit-table").innerHTML = `
+    <table><thead><tr><th>编号</th><th>客户</th><th>类型</th><th>内容</th><th>下次回访</th><th>负责人</th></tr></thead>
+    <tbody>${visitRows || '<tr><td colspan="6" class="empty">暂无回访</td></tr>'}</tbody></table>`;
+}
+
+async function loadNurture() {
+  const [campaigns, rules, events, stats] = await Promise.all([
+    fetchJSON("/api/v1/nurture/campaigns"),
+    fetchJSON("/api/v1/nurture/rules"),
+    fetchJSON("/api/v1/nurture/events"),
+    fetchJSON("/api/v1/nurture/stats"),
+  ]);
+  state.nurture = {
+    campaigns: campaigns.campaigns || [], rules: rules.rules || [],
+    events: events.events || [], stats,
+  };
+  renderNurture();
+}
+
+function renderNurture() {
+  const stats = state.nurture.stats || {};
+  $("nurture-kpis").innerHTML =
+    kpi("计划数", stats.campaigns) +
+    kpi("运行中", stats.running) +
+    kpi("规则数", stats.rules) +
+    kpi("已触达", stats.sent) +
+    kpi("待触达", stats.pending);
+  const campaignRows = state.nurture.campaigns.map((c) => `
+    <tr><td>${c.id}</td><td>${esc(c.name)}</td><td>${esc(zh(c.trigger_type))}</td><td>${esc(c.trigger_value || "暂无")}</td><td>${badge(c.status)}</td>
+    <td><div class="lead-actions"><button data-nurture-action="running" data-id="${c.id}">启动</button><button data-nurture-action="paused" data-id="${c.id}">暂停</button></div></td></tr>`).join("");
+  $("nurture-campaign-table").innerHTML = `
+    <table><thead><tr><th>编号</th><th>计划</th><th>触发类型</th><th>触发值</th><th>状态</th><th>操作</th></tr></thead>
+    <tbody>${campaignRows || '<tr><td colspan="6" class="empty">暂无培育计划</td></tr>'}</tbody></table>`;
+  const ruleRows = state.nurture.rules.map((r) => `
+    <tr><td>${r.id}</td><td>${r.campaign_id}</td><td class="num">${r.sequence}</td><td>${esc(zh(r.condition_type))}</td><td>${esc(r.condition_value || "暂无")}</td><td>${esc(r.content || "暂无")}</td><td class="num">${r.delay_hours}h</td></tr>`).join("");
+  $("nurture-rule-table").innerHTML = `
+    <table><thead><tr><th>编号</th><th>计划</th><th class="num">顺序</th><th>条件</th><th>条件值</th><th>内容</th><th class="num">延迟</th></tr></thead>
+    <tbody>${ruleRows || '<tr><td colspan="7" class="empty">暂无规则</td></tr>'}</tbody></table>`;
+  const eventRows = state.nurture.events.map((e) => `
+    <tr><td>${e.id}</td><td>${e.campaign_id}</td><td>${e.rule_id}</td><td>${esc(displayId(e.session_id))}</td><td>${esc(e.personalized_content || "暂无")}</td><td>${badge(e.status)}</td><td>${esc((e.sent_at || "").slice(0, 16) || "暂无")}</td></tr>`).join("");
+  $("nurture-event-table").innerHTML = `
+    <table><thead><tr><th>编号</th><th>计划</th><th>规则</th><th>客户</th><th>内容</th><th>状态</th><th>发送时间</th></tr></thead>
+    <tbody>${eventRows || '<tr><td colspan="7" class="empty">暂无触达记录</td></tr>'}</tbody></table>`;
+}
+
+async function loadAiops() {
+  try {
+    const data = await fetchJSON("/api/v1/aiops/reports");
+    state.aiops = { reports: data.reports || [] };
+  } catch (e) {
+    state.aiops = { reports: [] };
+  }
+  renderAiops();
+}
+
+function renderAiops() {
+  const oppSel = $("coach-opp");
+  const contractSel = $("risk-contract");
+  if (oppSel && oppSel.options.length === 0) {
+    oppSel.innerHTML = '<option value="">选择商机</option>' + state.opportunities.list.map((o) =>
+      `<option value="${o.id}">${esc(o.name)}</option>`).join("");
+  }
+  if (contractSel && contractSel.options.length === 0) {
+    contractSel.innerHTML = '<option value="">选择合同</option>' + state.cpq.contracts.map((c) =>
+      `<option value="${c.id}">${esc(c.contract_no)}</option>`).join("");
+  }
+  const rows = state.aiops.reports.map((r) => `
+    <tr><td>${r.id}</td><td>${esc(r.report_type)}</td><td>${esc(r.scope || "暂无")}</td><td>${esc((r.content || "").slice(0, 120))}</td><td>${esc((r.created_at || "").slice(0, 16))}</td></tr>`).join("");
+  $("aiops-table").innerHTML = `
+    <table><thead><tr><th>编号</th><th>类型</th><th>范围</th><th>内容</th><th>时间</th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="5" class="empty">暂无AI报告</td></tr>'}</tbody></table>`;
+}
+
+function renderPortraits() {
+  const p = state.portraits.portrait;
+  if (!p) {
+    $("portrait-summary").innerHTML = '<div class="empty">输入客户ID后加载360画像</div>';
+    return;
+  }
+  const c = p.customer || {};
+  const fields = [
+    ["昵称", c.nickname], ["姓名", c.name], ["手机", c.phone], ["微信", c.wechat_id],
+    ["身份", c.identity], ["基础", c.level], ["目标", c.goal], ["预算", c.budget],
+    ["意向", c.intent_level], ["阶段", c.stage],
+  ].map(([k, v]) => `<div class="field"><div class="k">${k}</div><div class="v">${esc(v || "暂无")}</div></div>`).join("");
+  const tags = (p.tags || []).map((t) => `<span class="badge warn" style="margin-right:6px">${esc(t.tag)}</span>`).join("") || "无";
+  const risks = (p.risks || []).map((r) => `
+    <tr><td>${esc(r.risk_type)}</td><td>${badge(r.level)}</td><td>${esc(r.content)}</td><td>${badge(r.status)}</td></tr>`).join("");
+  const people = (p.stakeholders || []).map((s) => `
+    <tr><td>${esc(s.name)}</td><td>${esc(s.role)}</td><td>${esc(s.relation)}</td><td>${esc(s.company)}</td><td>${esc(s.influence)}</td></tr>`).join("");
+  const journey = (p.journey || []).map((j) => `
+    <tr><td>${esc(zh(j.channel))}</td><td>${esc(j.action)}</td><td>${esc(j.detail || "暂无")}</td><td>${esc((j.created_at || "").slice(0, 16))}</td></tr>`).join("");
+  $("portrait-summary").innerHTML = `
+    <div class="profile-grid">${fields}</div>
+    <div class="box"><h2>标签</h2>${tags}</div>
+    <div class="grid-2">
+      <div class="box"><h2>风险事件（${(p.risks || []).length}）</h2><table><thead><tr><th>类型</th><th>等级</th><th>内容</th><th>状态</th></tr></thead><tbody>${risks || '<tr><td colspan="4" class="empty">无风险</td></tr>'}</tbody></table></div>
+      <div class="box"><h2>干系人（${(p.stakeholders || []).length}）</h2><table><thead><tr><th>姓名</th><th>角色</th><th>关系</th><th>公司</th><th>影响力</th></tr></thead><tbody>${people || '<tr><td colspan="5" class="empty">无干系人</td></tr>'}</tbody></table></div>
+    </div>
+    <div class="box"><h2>跨渠道动线（${(p.journey || []).length}）</h2><table><thead><tr><th>渠道</th><th>动作</th><th>详情</th><th>时间</th></tr></thead><tbody>${journey || '<tr><td colspan="4" class="empty">无动线</td></tr>'}</tbody></table></div>
+    <div class="grid-2">
+      <div class="box"><h2>关联数据</h2><div class="kpis">${kpi("订单", (p.orders || []).length)}${kpi("商机", (p.opportunities || []).length)}${kpi("工单", (p.tickets || []).length)}${kpi("回访", (p.visits || []).length)}</div></div>
+      <div class="box"><h2>工商信息</h2><div class="profile-grid">${(function(){ const b=p.business_profile||{}; return [["公司",b.company_name],["统一信用码",b.unified_code],["法人",b.legal_person],["行业",b.industry],["地址",b.address]].map(([k,v])=>`<div class="field"><div class="k">${k}</div><div class="v">${esc(v||"-")}</div></div>`).join(""); })()}</div></div>
+    </div>`;
+}
+
+async function loadPlatform() {
+  const [fields, roles, members, bi] = await Promise.all([
+    fetchJSON("/api/v1/custom-fields"),
+    fetchJSON("/api/v1/roles"),
+    fetchJSON("/api/v1/team"),
+    fetchJSON("/api/v1/bi/metrics"),
+  ]);
+  state.platform = {
+    fields: fields.fields || [], roles: roles.roles || [],
+    members: members.members || [], bi,
+  };
+  renderPlatform();
+}
+
+function renderPlatform() {
+  const bi = state.platform.bi || {};
+  const k = bi.kpis || {};
+  $("platform-kpis").innerHTML =
+    kpi("客户", k.customers) +
+    kpi("线索", k.leads) +
+    kpi("管道", "¥" + fmt(k.pipeline)) +
+    kpi("收入", "¥" + fmt(k.revenue)) +
+    kpi("应收", "¥" + fmt(k.outstanding)) +
+    kpi("待审批", k.approvals_pending) +
+    kpi("团队成员", k.team) +
+    kpi("自定义字段", k.custom_fields);
+  const funnelRows = (bi.funnel || []).map((f) => `
+    <tr><td>${esc(f.label)}</td><td class="num">${fmt(f.count)}</td><td class="num">${f.ratio}%</td><td style="min-width:120px">${bar(f.count, Math.max(...(bi.funnel || []).map((x) => x.count), 1))}</td></tr>`).join("");
+  $("bi-table").innerHTML = `
+    <table><thead><tr><th>阶段</th><th class="num">客户数</th><th class="num">占比</th><th>分布</th></tr></thead>
+    <tbody>${funnelRows || '<tr><td colspan="4" class="empty">暂无数据</td></tr>'}</tbody></table>`;
+  const fieldRows = state.platform.fields.map((f) => `
+    <tr><td>${esc(zh(f.entity))}</td><td>${esc(f.field_name)}</td><td>${esc(f.field_key)}</td><td>${esc(zh(f.field_type))}</td><td>${f.required ? "必填" : "选填"}</td><td>${f.enabled ? "启用" : "停用"}</td></tr>`).join("");
+  $("field-table").innerHTML = `
+    <table><thead><tr><th>对象</th><th>名称</th><th>Key</th><th>类型</th><th>必填</th><th>状态</th></tr></thead>
+    <tbody>${fieldRows || '<tr><td colspan="6" class="empty">暂无自定义字段</td></tr>'}</tbody></table>`;
+  const roleRows = state.platform.roles.map((r) => `
+    <tr><td>${r.id}</td><td>${esc(r.name)}</td><td>${esc((r.permissions || []).join(", "))}</td><td>${esc(r.description || "暂无")}</td></tr>`).join("");
+  $("role-table").innerHTML = `
+    <table><thead><tr><th>编号</th><th>角色</th><th>权限</th><th>说明</th></tr></thead>
+    <tbody>${roleRows || '<tr><td colspan="4" class="empty">暂无角色</td></tr>'}</tbody></table>`;
+  const memberRows = state.platform.members.map((m) => `
+    <tr><td>${m.id}</td><td>${esc(m.name)}</td><td>${esc(m.nickname || "暂无")}</td><td>${esc(zh(m.role))}</td><td>${esc(m.phone || "暂无")}</td><td>${badge(m.status)}</td></tr>`).join("");
+  $("member-table").innerHTML = `
+    <table><thead><tr><th>编号</th><th>姓名</th><th>微信昵称</th><th>角色</th><th>手机</th><th>状态</th></tr></thead>
+    <tbody>${memberRows || '<tr><td colspan="6" class="empty">暂无成员</td></tr>'}</tbody></table>`;
+}
+
+document.addEventListener("click", async (e) => {
+  const oppBtn = e.target.closest("button[data-opp-action]");
+  if (oppBtn) {
+    const id = Number(oppBtn.dataset.id);
+    const action = oppBtn.dataset.oppAction;
+    try {
+      if (action === "advance") {
+        const stages = ["qualifying", "proposal", "negotiation"];
+        const current = state.opportunities.list.find((o) => o.id === id) || {};
+        const next = stages[Math.min(stages.indexOf(current.stage) + 1, stages.length - 1)];
+        await postJSON(`/api/v1/opportunities/${id}/stage`, { stage: next });
+      } else if (action === "predict") {
+        await postJSON(`/api/v1/opportunities/${id}/predict`, {});
+      } else if (action === "won") {
+        await postJSON(`/api/v1/opportunities/${id}/stage`, { stage: "won" });
+      } else if (action === "lost") {
+        const reason = prompt("输单原因") || "";
+        await postJSON(`/api/v1/opportunities/${id}/stage`, { stage: "lost", loss_reason: reason });
+      }
+      await loadOpportunities();
+    } catch (err) { showError("商机操作失败：" + err.message); }
+    return;
+  }
+  const quoteBtn = e.target.closest("button[data-quote-action]");
+  if (quoteBtn) {
+    try {
+      await postJSON(`/api/v1/quotes/${quoteBtn.dataset.id}/status`, { status: quoteBtn.dataset.quoteAction });
+      await loadCpq();
+    } catch (err) { showError("报价操作失败：" + err.message); }
+    return;
+  }
+  const contractBtn = e.target.closest("button[data-contract-action]");
+  if (contractBtn) {
+    try {
+      await postJSON(`/api/v1/contracts/${contractBtn.dataset.id}/status`, { status: contractBtn.dataset.contractAction });
+      await loadCpq();
+    } catch (err) { showError("合同操作失败：" + err.message); }
+    return;
+  }
+  const approvalBtn = e.target.closest("button[data-approval-action]");
+  if (approvalBtn) {
+    try {
+      await postJSON(`/api/v1/approvals/${approvalBtn.dataset.id}/decide`, { status: approvalBtn.dataset.approvalAction, approver: "" });
+      await loadCpq();
+    } catch (err) { showError("审批操作失败：" + err.message); }
+    return;
+  }
+  const shipBtn = e.target.closest("button[data-ship-action]");
+  if (shipBtn) {
+    try {
+      await fetch(`/api/v1/shipments/${shipBtn.dataset.id}`, {
+        method: "PATCH", headers: apiHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ status: shipBtn.dataset.shipAction }),
+      });
+      await loadFinance();
+    } catch (err) { showError("发货操作失败：" + err.message); }
+    return;
+  }
+  const invoiceBtn = e.target.closest("button[data-invoice-action]");
+  if (invoiceBtn) {
+    try {
+      await postJSON(`/api/v1/invoices/${invoiceBtn.dataset.id}/status`, { status: invoiceBtn.dataset.invoiceAction });
+      await loadFinance();
+    } catch (err) { showError("发票操作失败：" + err.message); }
+    return;
+  }
+  const receivableBtn = e.target.closest("button[data-receivable]");
+  if (receivableBtn) {
+    const amount = Number(prompt("本次核销金额") || 0);
+    if (amount <= 0) return;
+    try {
+      await postJSON(`/api/v1/receivables/${receivableBtn.dataset.receivable}/receipt`, { amount, method: "transfer" });
+      await loadFinance();
+    } catch (err) { showError("核销失败：" + err.message); }
+    return;
+  }
+  const campaignBtn = e.target.closest("button[data-campaign-action]");
+  if (campaignBtn) {
+    try {
+      await fetch(`/api/v1/campaigns/${campaignBtn.dataset.id}`, {
+        method: "PATCH", headers: apiHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ status: campaignBtn.dataset.campaignAction }),
+      });
+      await loadMarketing();
+    } catch (err) { showError("活动操作失败：" + err.message); }
+    return;
+  }
+  const sopStart = e.target.closest("button[data-sop-start]");
+  if (sopStart) {
+    const sessionId = prompt("客户ID/session_id");
+    if (!sessionId) return;
+    try {
+      await postJSON("/api/v1/sop/executions", { template_id: Number(sopStart.dataset.sopStart), session_id: sessionId });
+      await loadSop();
+    } catch (err) { showError("SOP下发失败：" + err.message); }
+    return;
+  }
+  const sopExec = e.target.closest("button[data-sop-exec]");
+  if (sopExec) {
+    try {
+      await postJSON(`/api/v1/sop/executions/${sopExec.dataset.id}/${sopExec.dataset.sopExec}`, {});
+      await loadSop();
+    } catch (err) { showError("SOP执行失败：" + err.message); }
+    return;
+  }
+  const ticketBtn = e.target.closest("button[data-ticket-action]");
+  if (ticketBtn) {
+    try {
+      await fetch(`/api/v1/tickets/${ticketBtn.dataset.id}`, {
+        method: "PATCH", headers: apiHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ status: ticketBtn.dataset.ticketAction }),
+      });
+      await loadTickets();
+    } catch (err) { showError("工单操作失败：" + err.message); }
+    return;
+  }
+  const nurtureBtn = e.target.closest("button[data-nurture-action]");
+  if (nurtureBtn) {
+    try {
+      await fetch(`/api/v1/nurture/campaigns/${nurtureBtn.dataset.id}`, {
+        method: "PATCH", headers: apiHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ status: nurtureBtn.dataset.nurtureAction }),
+      });
+      await loadNurture();
+    } catch (err) { showError("培育操作失败：" + err.message); }
+    return;
+  }
+});
+
+$("opp-create").addEventListener("click", async () => {
+  try {
+    await postJSON("/api/v1/opportunities", {
+      name: $("opp-name").value.trim(),
+      session_id: $("opp-session").value.trim(),
+      product_name: $("opp-product").value.trim(),
+      amount: Number($("opp-amount").value || 0),
+      owner: $("opp-owner").value.trim(),
+      expected_close_at: $("opp-close").value.trim(),
+      stage: $("opp-stage").value,
+    });
+    ["opp-name", "opp-session", "opp-product", "opp-amount", "opp-owner", "opp-close"].forEach((id) => $(id).value = "");
+    await loadOpportunities();
+  } catch (e) { showError("创建商机失败：" + e.message); }
+});
+$("opp-refresh-risk").addEventListener("click", async () => {
+  try { await postJSON("/api/v1/opportunities/refresh-risk", {}); await loadOpportunities(); }
+  catch (e) { showError("刷新预警失败：" + e.message); }
+});
+$("price-create").addEventListener("click", async () => {
+  try {
+    await postJSON("/api/v1/price-items", {
+      product_name: $("price-name").value.trim(),
+      sku: $("price-sku").value.trim(),
+      price: Number($("price-value").value || 0),
+    });
+    ["price-name", "price-sku", "price-value"].forEach((id) => $(id).value = "");
+    await loadCpq();
+  } catch (e) { showError("添加价格失败：" + e.message); }
+});
+$("quote-create").addEventListener("click", async () => {
+  try {
+    await postJSON("/api/v1/quotes", {
+      customer_name: $("quote-customer").value.trim(),
+      session_id: $("quote-session").value.trim(),
+      product_name: $("quote-product").value.trim(),
+      base_amount: Number($("quote-amount").value || 0),
+      discount_rate: Number($("quote-discount").value || 0),
+      valid_until: $("quote-valid").value.trim(),
+    });
+    ["quote-customer", "quote-session", "quote-product", "quote-amount", "quote-discount", "quote-valid"].forEach((id) => $(id).value = "");
+    await loadCpq();
+  } catch (e) { showError("创建报价失败：" + e.message); }
+});
+$("contract-create").addEventListener("click", async () => {
+  try {
+    await postJSON("/api/v1/contracts", {
+      customer_name: $("contract-customer").value.trim(),
+      session_id: $("contract-session").value.trim(),
+      product_name: $("contract-product").value.trim(),
+      amount: Number($("contract-amount").value || 0),
+      terms: $("contract-terms").value.trim(),
+      expires_at: $("contract-expires").value.trim(),
+    });
+    ["contract-customer", "contract-session", "contract-product", "contract-amount", "contract-terms", "contract-expires"].forEach((id) => $(id).value = "");
+    await loadCpq();
+  } catch (e) { showError("创建合同失败：" + e.message); }
+});
+$("ship-create").addEventListener("click", async () => {
+  try {
+    await postJSON("/api/v1/shipments", {
+      order_id: Number($("ship-order").value || 0),
+      carrier: $("ship-carrier").value.trim(),
+      tracking_no: $("ship-tracking").value.trim(),
+      address: $("ship-address").value.trim(),
+    });
+    ["ship-order", "ship-carrier", "ship-tracking", "ship-address"].forEach((id) => $(id).value = "");
+    await loadFinance();
+  } catch (e) { showError("创建发货失败：" + e.message); }
+});
+$("invoice-create").addEventListener("click", async () => {
+  try {
+    await postJSON("/api/v1/invoices", {
+      order_id: Number($("invoice-order").value || 0),
+      amount: Number($("invoice-amount").value || 0),
+      title: $("invoice-title").value.trim(),
+      tax_no: $("invoice-taxno").value.trim(),
+    });
+    ["invoice-order", "invoice-amount", "invoice-title", "invoice-taxno"].forEach((id) => $(id).value = "");
+    await loadFinance();
+  } catch (e) { showError("开票失败：" + e.message); }
+});
+$("plan-create").addEventListener("click", async () => {
+  try {
+    await postJSON("/api/v1/payment-plans", {
+      order_id: Number($("plan-order").value || 0),
+      amounts: $("plan-amounts").value.split(",").map((s) => Number(s.trim() || 0)).filter((n) => n > 0),
+      due_dates: $("plan-dates").value.split(",").map((s) => s.trim()).filter(Boolean),
+    });
+    ["plan-order", "plan-amounts", "plan-dates"].forEach((id) => $(id).value = "");
+    await loadFinance();
+  } catch (e) { showError("创建回款计划失败：" + e.message); }
+});
+$("finance-refresh").addEventListener("click", async () => {
+  try { await postJSON("/api/v1/finance/refresh-overdue", {}); await loadFinance(); }
+  catch (e) { showError("刷新逾期失败：" + e.message); }
+});
+$("campaign-create").addEventListener("click", async () => {
+  try {
+    await postJSON("/api/v1/campaigns", {
+      name: $("campaign-name").value.trim(),
+      channel: $("campaign-channel").value,
+      budget: Number($("campaign-budget").value || 0),
+    });
+    ["campaign-name", "campaign-budget"].forEach((id) => $(id).value = "");
+    await loadMarketing();
+  } catch (e) { showError("创建活动失败：" + e.message); }
+});
+$("ad-save").addEventListener("click", async () => {
+  try {
+    await postJSON("/api/v1/ad-metrics", {
+      campaign_id: Number($("ad-campaign").value || 0),
+      metric_date: $("ad-date").value.trim(),
+      impressions: Number($("ad-impressions").value || 0),
+      clicks: Number($("ad-clicks").value || 0),
+      conversions: Number($("ad-conversions").value || 0),
+      cost: Number($("ad-cost").value || 0),
+      revenue: Number($("ad-revenue").value || 0),
+    });
+    ["ad-campaign", "ad-date", "ad-impressions", "ad-clicks", "ad-conversions", "ad-cost", "ad-revenue"].forEach((id) => $(id).value = "");
+    await loadMarketing();
+  } catch (e) { showError("保存广告指标失败：" + e.message); }
+});
+$("rp-create").addEventListener("click", async () => {
+  try {
+    await postJSON("/api/v1/repurchases", {
+      session_id: $("rp-session").value.trim(),
+      product_name: $("rp-product").value.trim(),
+      plan_date: $("rp-date").value.trim(),
+      note: $("rp-note").value.trim(),
+    });
+    ["rp-session", "rp-product", "rp-date", "rp-note"].forEach((id) => $(id).value = "");
+    await loadMarketing();
+  } catch (e) { showError("创建复购计划失败：" + e.message); }
+});
+$("rp-dispatch").addEventListener("click", async () => {
+  try {
+    const data = await postJSON("/api/v1/repurchases/dispatch", {});
+    alert(`已派发 ${data.dispatched} 条复购跟进`);
+    await loadMarketing();
+  } catch (e) { showError("派发失败：" + e.message); }
+});
+$("sop-create").addEventListener("click", async () => {
+  let steps = [];
+  try { steps = JSON.parse($("sop-steps").value || "[]"); } catch (e) { showError("步骤JSON格式错误"); return; }
+  const sopRaw = $("sop-steps").value.trim();
+  try {
+    if (sopRaw.startsWith("[")) {
+      steps = JSON.parse(sopRaw);
+    } else {
+      steps = sopRaw.split("\n").map((l) => l.trim()).filter(Boolean).map((line) => {
+        const parts = line.split("|").map((x) => x.trim());
+        return { name: parts[0] || "步骤", due_hours: Number(parts[1]) || 24 };
+      });
+    }
+  } catch (e) { showError("步骤格式错误，请使用：步骤名|延迟小时"); return; }
+  try {
+    await postJSON("/api/v1/sop/templates", { name: $("sop-name").value.trim(), stage: $("sop-stage").value.trim(), steps });
+    ["sop-name", "sop-stage", "sop-steps"].forEach((id) => $(id).value = "");
+    await loadSop();
+  } catch (e) { showError("创建SOP失败：" + e.message); }
+});
+$("sop-refresh").addEventListener("click", async () => {
+  try { await postJSON("/api/v1/sop/refresh-overdue", {}); await loadSop(); }
+  catch (e) { showError("刷新逾期失败：" + e.message); }
+});
+$("ticket-create").addEventListener("click", async () => {
+  try {
+    await postJSON("/api/v1/tickets", {
+      title: $("ticket-title").value.trim(),
+      session_id: $("ticket-session").value.trim(),
+      category: $("ticket-category").value.trim(),
+      priority: $("ticket-priority").value,
+      owner: $("ticket-owner").value.trim(),
+    });
+    ["ticket-title", "ticket-session", "ticket-category", "ticket-owner"].forEach((id) => $(id).value = "");
+    await loadTickets();
+  } catch (e) { showError("创建工单失败：" + e.message); }
+});
+$("ticket-refresh").addEventListener("click", async () => {
+  try { await postJSON("/api/v1/tickets/refresh-overdue", {}); await loadTickets(); }
+  catch (e) { showError("刷新SLA失败：" + e.message); }
+});
+$("visit-create").addEventListener("click", async () => {
+  try {
+    await postJSON("/api/v1/visits", {
+      session_id: $("visit-session").value.trim(),
+      order_id: Number($("visit-order").value || 0) || null,
+      visit_type: $("visit-type").value.trim() || "followup",
+      next_visit_at: $("visit-next").value.trim(),
+      content: $("visit-content").value.trim(),
+    });
+    ["visit-session", "visit-order", "visit-type", "visit-next", "visit-content"].forEach((id) => $(id).value = "");
+    await loadTickets();
+  } catch (e) { showError("添加回访失败：" + e.message); }
+});
+$("nurture-create").addEventListener("click", async () => {
+  try {
+    await postJSON("/api/v1/nurture/campaigns", {
+      name: $("nurture-name").value.trim(),
+      trigger_type: $("nurture-trigger").value,
+      trigger_value: $("nurture-value").value.trim(),
+    });
+    ["nurture-name", "nurture-value"].forEach((id) => $(id).value = "");
+    await loadNurture();
+  } catch (e) { showError("创建培育计划失败：" + e.message); }
+});
+$("nurture-dispatch").addEventListener("click", async () => {
+  try {
+    const data = await postJSON("/api/v1/nurture/dispatch", {});
+    alert(`新建 ${data.created} 条，发送 ${data.sent} 条`);
+    await loadNurture();
+  } catch (e) { showError("触达失败：" + e.message); }
+});
+$("rule-create").addEventListener("click", async () => {
+  try {
+    await postJSON("/api/v1/nurture/rules", {
+      campaign_id: Number($("rule-campaign").value || 0),
+      sequence: Number($("rule-seq").value || 1),
+      content: $("rule-content").value.trim(),
+      condition_type: $("rule-condition").value.trim() || "always",
+      condition_value: $("rule-condition-value").value.trim(),
+      delay_hours: Number($("rule-delay").value || 0),
+    });
+    ["rule-campaign", "rule-seq", "rule-condition", "rule-condition-value", "rule-delay", "rule-content"].forEach((id) => $(id).value = "");
+    await loadNurture();
+  } catch (e) { showError("添加规则失败：" + e.message); }
+});
+$("briefing-run").addEventListener("click", async () => {
+  try {
+    const data = await postJSON("/api/v1/aiops/daily-briefing", {});
+    $("aiops-output").textContent = data.content || "";
+    await loadAiops();
+  } catch (e) { showError("生成简报失败：" + e.message); }
+});
+$("ask-run").addEventListener("click", async () => {
+  const q = $("ask-question").value.trim();
+  if (!q) return;
+  try {
+    const data = await postJSON("/api/v1/aiops/ask-data", { question: q });
+    $("aiops-output").textContent = data.answer || "";
+    await loadAiops();
+  } catch (e) { showError("问数失败：" + e.message); }
+});
+$("coach-run").addEventListener("click", async () => {
+  const id = $("coach-opp").value;
+  if (!id) return;
+  try {
+    const data = await postJSON(`/api/v1/aiops/deal-coach/${id}`, {});
+    $("aiops-output").textContent = (data.content || "") + "\n\n" + JSON.stringify(data.opportunity || {}, null, 2);
+    await loadAiops();
+  } catch (e) { showError("教练分析失败：" + e.message); }
+});
+$("risk-run").addEventListener("click", async () => {
+  const id = $("risk-contract").value;
+  if (!id) return;
+  try {
+    const data = await postJSON(`/api/v1/aiops/contract-risk/${id}`, {});
+    $("aiops-output").textContent = data.content || "";
+    await loadAiops();
+  } catch (e) { showError("合同风控失败：" + e.message); }
+});
+$("portrait-load").addEventListener("click", async () => {
+  const sessionId = $("portrait-session").value.trim();
+  if (!sessionId) return;
+  try {
+    const data = await fetchJSON("/api/v1/portrait?session_id=" + encodeURIComponent(sessionId));
+    state.portraits.portrait = data;
+    renderPortraits();
+  } catch (e) { showError("加载画像失败：" + e.message); }
+});
+$("p-tag-add").addEventListener("click", async () => {
+  const sessionId = $("p-add-session").value.trim();
+  const tag = $("p-tag").value.trim();
+  if (!sessionId || !tag) return;
+  try {
+    await postJSON("/api/v1/portrait/tags", { session_id: sessionId, tag });
+    $("p-tag").value = "";
+    if ($("portrait-session").value === sessionId) $("portrait-load").click();
+  } catch (e) { showError("加标签失败：" + e.message); }
+});
+$("p-risk-add").addEventListener("click", async () => {
+  const sessionId = $("p-add-session").value.trim();
+  if (!sessionId) return;
+  try {
+    await postJSON("/api/v1/portrait/risks", {
+      session_id: sessionId,
+      risk_type: $("p-risk-type").value.trim(),
+      content: $("p-risk-content").value.trim(),
+      level: "high",
+    });
+    ["p-risk-type", "p-risk-content"].forEach((id) => $(id).value = "");
+    if ($("portrait-session").value === sessionId) $("portrait-load").click();
+  } catch (e) { showError("加风险失败：" + e.message); }
+});
+$("p-business-add").addEventListener("click", async () => {
+  const sessionId = $("p-add-session").value.trim();
+  if (!sessionId) return;
+  try {
+    await postJSON("/api/v1/portrait/business-profile", {
+      session_id: sessionId,
+      company_name: $("p-company").value.trim(),
+      legal_person: $("p-legal").value.trim(),
+      industry: $("p-industry").value.trim(),
+    });
+    ["p-company", "p-legal", "p-industry"].forEach((id) => $(id).value = "");
+    if ($("portrait-session").value === sessionId) $("portrait-load").click();
+  } catch (e) { showError("保存工商信息失败：" + e.message); }
+});
+$("p-person-add").addEventListener("click", async () => {
+  const sessionId = $("p-add-session").value.trim();
+  if (!sessionId) return;
+  try {
+    await postJSON("/api/v1/portrait/stakeholders", {
+      session_id: sessionId,
+      name: $("p-person").value.trim(),
+      role: $("p-person-role").value.trim(),
+      influence: $("p-person-influence").value.trim() || "medium",
+    });
+    ["p-person", "p-person-role", "p-person-influence"].forEach((id) => $(id).value = "");
+    if ($("portrait-session").value === sessionId) $("portrait-load").click();
+  } catch (e) { showError("加干系人失败：" + e.message); }
+});
+$("field-create").addEventListener("click", async () => {
+  try {
+    await postJSON("/api/v1/custom-fields", {
+      entity: $("field-entity").value,
+      field_name: $("field-name").value.trim(),
+      field_key: $("field-key").value.trim(),
+      field_type: $("field-type").value,
+    });
+    ["field-name", "field-key"].forEach((id) => $(id).value = "");
+    await loadPlatform();
+  } catch (e) { showError("添加字段失败：" + e.message); }
+});
+$("role-create").addEventListener("click", async () => {
+  try {
+    const perms = $("role-perms").value.split(",").map((s) => s.trim()).filter(Boolean);
+    await postJSON("/api/v1/roles", { name: $("role-name").value.trim(), permissions: perms });
+    ["role-name", "role-perms"].forEach((id) => $(id).value = "");
+    await loadPlatform();
+  } catch (e) { showError("创建角色失败：" + e.message); }
+});
+$("member-create").addEventListener("click", async () => {
+  try {
+    await postJSON("/api/v1/team", {
+      name: $("member-name").value.trim(),
+      nickname: $("member-nick").value.trim(),
+      role: $("member-role").value.trim() || "sales",
+    });
+    ["member-name", "member-nick", "member-role"].forEach((id) => $(id).value = "");
+    await loadPlatform();
+  } catch (e) { showError("添加成员失败：" + e.message); }
+});
+
+document.addEventListener("click", async (e) => {
+  const saveBtn = e.target.closest("#customer-save");
+  if (!saveBtn) return;
+  const sessionEl = document.getElementById("drawer-session");
+  const sessionId = sessionEl ? sessionEl.textContent.trim() : "";
+  try {
+    const res = await fetch("/api/v1/customer/" + encodeURIComponent(sessionId), {
+      method: "PATCH",
+      headers: apiHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({
+        name: $("edit-name").value.trim(),
+        nickname: $("edit-nickname").value.trim(),
+        phone: $("edit-phone").value.trim(),
+        wechat_id: $("edit-wechat").value.trim(),
+        identity: $("edit-identity").value.trim(),
+        level: $("edit-level").value.trim(),
+        goal: $("edit-goal").value.trim(),
+        budget: $("edit-budget").value.trim(),
+        interest: $("edit-interest").value.trim(),
+        intent_level: $("edit-intent").value.trim(),
+        next_follow_up: $("edit-next").value.trim(),
+        notes: $("edit-notes").value.trim(),
+      }),
+    });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    alert("档案已保存");
+    await loadCustomers();
+    openCustomer(sessionId);
+  } catch (err) { showError("保存档案失败：" + err.message); }
+});
+
+function normalizeMenuButton(b) {
+  return {
+    name: b.name || "", type: b.type || "click", key: b.key || "", url: b.url || "",
+    children: (b.sub_button || []).map((c) => ({
+      name: c.name || "", type: c.type || "click", key: c.key || "", url: c.url || "",
+    })),
+  };
+}
+
+function menuTypeOptions(selected) {
+  return [["click", "点击事件"], ["view", "跳转链接"]]
+    .map(([v, l]) => `<option value="${v}" ${selected === v ? "selected" : ""}>${l}</option>`).join("");
+}
+
+function renderOfficial() {
+  const wrap = $("official-menu-editor");
+  if (!wrap) return;
+  const rows = state.official.buttons.map((b, i) => {
+    const children = (b.children || []).map((c, j) => `
+      <div class="menu-child" style="background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px;margin:6px 0">
+        <div class="toolbar">
+          <input class="m-name" placeholder="子菜单名" value="${esc(c.name)}" maxlength="16">
+          <select class="m-type">${menuTypeOptions(c.type)}</select>
+          <input class="m-key" placeholder="事件Key" value="${esc(c.key)}">
+          <input class="m-url" placeholder="跳转链接" value="${esc(c.url)}">
+          <button type="button" data-menu-action="child-remove" data-index="${i}" data-child="${j}">删除</button>
+        </div>
+      </div>`).join("");
+    return `
+      <div class="box menu-top">
+        <div class="toolbar">
+          <input class="m-name" placeholder="一级菜单名" value="${esc(b.name)}" maxlength="4">
+          <select class="m-type">${menuTypeOptions(b.type)}</select>
+          <input class="m-key" placeholder="事件Key" value="${esc(b.key)}">
+          <input class="m-url" placeholder="跳转链接" value="${esc(b.url)}">
+          <button type="button" data-menu-action="top-remove" data-index="${i}">删除</button>
+          <button type="button" data-menu-action="child-add" data-index="${i}">加子菜单</button>
+        </div>
+        <div class="children">${children}</div>
+      </div>`;
+  }).join("");
+  wrap.innerHTML = rows || '<div class="empty">还没有菜单，点击“添加一级菜单”开始</div>';
+}
+
+function buildMenuPayload() {
+  const button = [];
+  document.querySelectorAll("#official-menu-editor .menu-top").forEach((row) => {
+    const name = row.querySelector(".m-name").value.trim();
+    if (!name) return;
+    const children = [];
+    row.querySelectorAll(".menu-child").forEach((childRow) => {
+      const cName = childRow.querySelector(".m-name").value.trim();
+      if (!cName) return;
+      const cType = childRow.querySelector(".m-type").value;
+      const item = { name: cName, type: cType };
+      if (cType === "click") item.key = childRow.querySelector(".m-key").value.trim() || cName;
+      if (cType === "view") item.url = childRow.querySelector(".m-url").value.trim();
+      children.push(item);
+    });
+    if (children.length) {
+      button.push({ name, sub_button: children });
+    } else {
+      const type = row.querySelector(".m-type").value;
+      const item = { name, type };
+      if (type === "click") item.key = row.querySelector(".m-key").value.trim() || name;
+      if (type === "view") item.url = row.querySelector(".m-url").value.trim();
+      button.push(item);
+    }
+  });
+  return { button };
+}
+
+async function loadOfficial() {
+  try {
+    const data = await fetchJSON("/api/v1/official/menu");
+    const menu = data.menu || {};
+    state.official.buttons = (menu.button || []).map(normalizeMenuButton);
+  } catch (e) {
+    state.official.buttons = [];
+  }
+  renderOfficial();
+}
+
+async function loadWechat() {
+  try {
+    const [status, qrcode, logs, overview] = await Promise.all([
+      fetchJSON("/api/v1/channels/wechat/status"),
+      fetchJSON("/api/v1/channels/wechat/qrcode"),
+      fetchJSON("/api/v1/channels/wechat/logs"),
+      fetchJSON("/api/v1/channels/overview"),
+    ]);
+    state.wechat = { status, qrcode, logs: logs.lines || [], overview };
+  } catch (e) {
+    showError("个人微信通道加载失败：" + e.message);
+  }
+  renderWechat();
+}
+  loadWechatConfig();
+
+async function loadWechatConfig() {
+  try {
+    const cfg = await fetchJSON("/api/v1/channels/wechat/config");
+    state.wechat = state.wechat || {};
+    state.wechat.config = cfg;
+    const target = document.getElementById("wc-target-room");
+    const trigger = document.getElementById("wc-trigger");
+    const personal = document.getElementById("wc-personal");
+    const delay = document.getElementById("wc-delay");
+    const maxlen = document.getElementById("wc-maxlen");
+    const split = document.getElementById("wc-split");
+    if (target && cfg.target_room) target.value = cfg.target_room;
+    if (trigger) trigger.value = String(!!cfg.require_mention);
+    if (personal) personal.value = String(!!cfg.personal_auto_reply);
+    if (delay) delay.value = Math.round((Number(cfg.min_reply_delay_ms) || 5000) / 1000);
+    if (maxlen) maxlen.value = Number(cfg.reply_max_length) || 50;
+    if (split) split.value = (Number(cfg.reply_split_delay_ms) || 1500) / 1000;
+  } catch (e) { /* optional */ }
+}
+
+function renderWechat() {
+  const w = state.wechat || {};
+  const s = w.status || {};
+  const q = w.qrcode || {};
+  const o = (w.overview || {}).official || {};
+  const hb = (w.overview || {}).wechat?.heartbeat || {};
+  const online = !!s.online;
+  const uptime = s.uptime_sec ? Math.floor(Number(s.uptime_sec) / 60) + " 分钟" : "-";
+  $("wechat-kpis").innerHTML =
+    kpi("个人微信", online ? "在线" : "离线", s.error || "") +
+    kpi("登录账号", s.bot_name || "未登录", "") +
+    kpi("目标群", s.target_room || "-", "") +
+    kpi("心跳", hb.online ? (hb.last_seen || "-") : "暂无", "90 秒内上报即在线");
+  const trigger = s.require_mention ? "仅 @机器人" : "群内全部文本";
+  const personal = s.personal_auto_reply ? "已开启" : "关闭（只记录）";
+  $("wechat-channel-status").innerHTML = `
+    <table><tbody>
+      <tr><th>通道</th><td>${online ? `<span class="badge ok">在线</span>` : `<span class="badge danger">离线</span>`} 个人微信（Wechaty）</td></tr>
+      <tr><th>登录账号</th><td>${esc(s.bot_name || "未登录")}</td></tr>
+      <tr><th>目标群</th><td>${esc(s.target_room || "-")}</td></tr>
+      <tr><th>群触发方式</th><td>${esc(trigger)}</td></tr>
+      <tr><th>私聊自动回复</th><td>${esc(personal)}</td></tr>
+      <tr><th>进程/运行时长</th><td>${esc(String(s.pid || "-"))} / ${esc(uptime)}</td></tr>
+      <tr><th>最近心跳</th><td>${esc(hb.last_seen || "-")}</td></tr>
+      <tr><th>扫码链接</th><td>${q.qr_url ? `<a href="${esc(q.qr_url)}" target="_blank">打开二维码</a>` : `<span class="muted">已登录或暂无二维码</span>`}</td></tr>
+      <tr><th>错误信息</th><td>${esc(s.error || "无")}</td></tr>
+    </tbody></table>`;
+  $("wechat-official-status").innerHTML = `
+    <table><tbody>
+      <tr><th>通道</th><td>${o.configured ? `<span class="badge ok">已配置</span>` : `<span class="badge warn">未配置</span>`} 微信公众号</td></tr>
+      <tr><th>AppID</th><td>${esc(o.app_id || "-")}</td></tr>
+      <tr><th>回调地址</th><td>${esc(o.callback_url || "-")}</td></tr>
+      <tr><th>说明</th><td class="muted">菜单发布与管理请在左侧“公众号”页面操作</td></tr>
+    </tbody></table>`;
+  $("wechat-logs").textContent = (w.logs || []).join("\n") || "暂无日志";
+}
+
+$("wechat-logs-refresh").addEventListener("click", async () => {
+  try {
+    const logs = await fetchJSON("/api/v1/channels/wechat/logs");
+    state.wechat.logs = logs.lines || [];
+    renderWechat();
+  } catch (e) { showError("日志刷新失败：" + e.message); }
+});
+
+$("wc-save").addEventListener("click", async () => {
+  const payload = {
+    target_room: document.getElementById("wc-target-room").value.trim(),
+    require_mention: document.getElementById("wc-trigger").value === "true",
+    personal_auto_reply: document.getElementById("wc-personal").value === "true",
+    min_reply_delay_ms: Math.round(Number(document.getElementById("wc-delay").value || 5) * 1000),
+    reply_max_length: Number(document.getElementById("wc-maxlen").value || 50),
+    reply_split_delay_ms: Math.round(Number(document.getElementById("wc-split").value || 1.5) * 1000),
+  };
+  const msg = document.getElementById("wc-save-msg");
+  msg.textContent = "保存中...";
+  try {
+    const data = await postJSON("/api/v1/channels/wechat/config", payload);
+    if (data.ok) {
+      msg.textContent = "已保存并应用（立即生效）";
+      await loadWechat();
+    } else {
+      msg.textContent = "保存失败：" + (data.error || "未知错误");
+    }
+  } catch (e) {
+    msg.textContent = "保存失败：" + e.message;
+  }
+});
+
+$("menu-add").addEventListener("click", () => {
+  if (state.official.buttons.length >= 3) { alert("一级菜单最多 3 个"); return; }
+  state.official.buttons.push({ name: "", type: "click", key: "", url: "", children: [] });
+  renderOfficial();
+});
+$("menu-load").addEventListener("click", loadOfficial);
+$("menu-publish").addEventListener("click", async () => {
+  const payload = buildMenuPayload();
+  if (!payload.button.length) { alert("请先添加菜单内容"); return; }
+  try {
+    const data = await postJSON("/api/v1/official/menu", payload);
+    if (data.errcode === 0) { alert("菜单发布成功"); await loadOfficial(); }
+    else { alert("发布失败：" + (data.errmsg || JSON.stringify(data))); }
+  } catch (e) { showError("发布菜单失败：" + e.message); }
+});
+$("menu-delete").addEventListener("click", async () => {
+  if (!confirm("确认删除公众号菜单？")) return;
+  try {
+    const res = await fetch("/api/v1/official/menu", { method: "DELETE", headers: apiHeaders() });
+    const data = await res.json();
+    if (data.errcode === 0) {
+      alert("菜单已删除");
+      state.official.buttons = [];
+      renderOfficial();
+    } else {
+      alert("删除失败：" + (data.errmsg || JSON.stringify(data)));
+    }
+  } catch (e) { showError("删除菜单失败：" + e.message); }
+});
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-menu-action]");
+  if (!btn) return;
+  const action = btn.dataset.menuAction;
+  const index = Number(btn.dataset.index);
+  if (action === "top-remove") {
+    state.official.buttons.splice(index, 1);
+    renderOfficial();
+  } else if (action === "child-add") {
+    if ((state.official.buttons[index].children || []).length >= 5) { alert("子菜单最多 5 个"); return; }
+    state.official.buttons[index].children.push({ name: "", type: "click", key: "", url: "" });
+    renderOfficial();
+  } else if (action === "child-remove") {
+    state.official.buttons[index].children.splice(Number(btn.dataset.child), 1);
+    renderOfficial();
+  }
+});
+
+
+function selectedLeadIds() {
+  return Array.from(document.querySelectorAll(".lead-check:checked")).map((x) => Number(x.value)).filter(Boolean);
+}
+
+async function batchLeads(action) {
+  const ids = selectedLeadIds();
+  if (!ids.length) { toast("请先勾选线索", "warn"); return; }
+  showLoading(true);
+  try {
+    let ok = 0;
+    for (const id of ids) {
+      if (action === "claim") await postJSON(`/api/v1/leads/${id}/claim`, {});
+      else await postJSON(`/api/v1/leads/${id}/status`, { status: action });
+      ok++;
+    }
+    toast(`已处理 ${ok} 条`, "ok");
+    await loadLeads();
+  } catch (e) { showError("批量操作失败：" + e.message); }
+  showLoading(false);
+}
+
+
+async function refreshNotify() {
+  try {
+    const data = await fetchJSON("/api/v1/notifications");
+    const items = data.notifications || [];
+    const el = document.getElementById("notify-count");
+    if (el) el.textContent = items.length ? String(items.length) : "";
+  } catch (e) { /* optional */ }
+}
+const notifyBtn = document.getElementById("notify-btn");
+if (notifyBtn) {
+  notifyBtn.addEventListener("click", async () => {
+    try {
+      const data = await fetchJSON("/api/v1/notifications");
+      const items = (data.notifications || []).slice(0, 3);
+      toast(items.length ? items.map((n) => n.content || "").join("  |  ").slice(0, 200) : "暂无通知", "ok");
+    } catch (e) { showError("批量操作失败：" + e.message); }
+  });
+}
+setInterval(refreshNotify, 60000);
+
+const leadBatchClaim = document.getElementById("lead-batch-claim");
+const leadBatchWon = document.getElementById("lead-batch-won");
+const leadBatchLost = document.getElementById("lead-batch-lost");
+if (leadBatchClaim) leadBatchClaim.addEventListener("click", () => batchLeads("claim"));
+if (leadBatchWon) leadBatchWon.addEventListener("click", () => batchLeads("won"));
+if (leadBatchLost) leadBatchLost.addEventListener("click", () => batchLeads("lost"));
+
+
+const promptSaveBtn = document.getElementById("prompt-save");
+if (promptSaveBtn) {
+  promptSaveBtn.addEventListener("click", async () => {
+    const content = document.getElementById("prompt-editor").value;
+    try {
+      const res = await fetch("/api/v1/system/prompt", {
+        method: "PUT", headers: apiHeaders({ "Content-Type": "application/json" }), body: JSON.stringify({ content }),
+      });
+      const data = await res.json();
+      alert(data.ok ? data.message : "保存失败：" + (data.error || ""));
+    } catch (err) { showError("保存提示词失败：" + err.message); }
+  });
+}
+const promptReloadBtn = document.getElementById("prompt-reload");
+if (promptReloadBtn) promptReloadBtn.addEventListener("click", loadPrompt);
+
+loadAll();
+</script>
+</body>
+</html>

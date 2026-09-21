@@ -1,0 +1,46 @@
+﻿# 销售客服智能体依赖
+# 安装: pip install -r requirements.txt
+
+# === 核心框架 ===
+langchain==1.3.14
+langchain-classic==1.0.8
+langchain-community>=0.3.0
+langchain-openai>=0.2.0
+fastembed>=0.4.0
+numpy>=1.26.0
+
+# === 配置管理 ===
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+python-dotenv>=1.0.0
+sqlalchemy>=2.0.0
+
+# === 微信 ===
+wechatpy>=1.8.0
+cryptography>=42.0.0
+pycryptodome>=3.20.0
+
+# === 文档解析 ===
+pypdf>=5.0.0
+python-docx>=1.1.0
+openpyxl>=3.1.0
+markdown>=3.5.0
+docx2txt>=0.9
+
+# === 公众号 Web 服务 ===
+fastapi>=0.115.0
+uvicorn>=0.34.0
+python-multipart>=0.0.9
+
+# === 工具 ===
+requests>=2.31.0
+# === 数据库（企业级升级）===
+psycopg2-binary>=2.9.0
+redis>=5.0.0
+celery>=5.4.0
+# 结构迁移：deploy/migrate.sh 与 compose 的 migrate 服务都要用 `python -m alembic`，
+# 漏了这条依赖会让迁移步骤直接 "No module named alembic"，把整次发布阻断。
+alembic>=1.13.0
+
+# Celery Beat 兼容（click>=8.4 与 celery 5.6 不兼容）
+click==8.1.8

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>销售智能体 · 移动端</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system,"Microsoft YaHei",sans-serif; background:#f3f5f9; color:#1e293b; padding-bottom:70px; }
+  .top { background: linear-gradient(135deg,#0f172a,#1e3a5f); color:#fff; padding:16px 16px 14px; }
+  .top h1 { font-size:17px; margin-bottom:6px; }
+  .key-bar { display:flex; gap:8px; }
+  .key-bar input { flex:1; padding:8px 10px; border-radius:8px; border:none; font-size:12px; }
+  .key-bar button { background:#3b82f6; color:#fff; border:none; border-radius:8px; padding:8px 12px; font-size:12px; }
+  .tabs { position:fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid #e2e8f0; display:flex; z-index:10; }
+  .tabs button { flex:1; padding:12px 4px; border:none; background:#fff; font-size:12px; color:#64748b; }
+  .tabs button.active { color:#2563eb; font-weight:600; border-top:2px solid #2563eb; }
+  .list { padding:12px; }
+  .card { background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px; margin-bottom:10px; }
+  .card h3 { font-size:14px; margin-bottom:4px; }
+  .card p { font-size:12px; color:#64748b; line-height:1.6; }
+  .badge { display:inline-block; padding:1px 8px; border-radius:9px; font-size:11px; background:#eff6ff; color:#2563eb; }
+  .kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding:12px; }
+  .kpi { background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:10px; text-align:center; }
+  .kpi .n { font-size:20px; font-weight:700; color:#0f172a; }
+  .kpi .l { font-size:11px; color:#64748b; margin-top:2px; }
+  .empty { color:#94a3b8; text-align:center; padding:30px 0; font-size:13px; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <h1>销售智能体 · 移动管理端</h1>
+    <div class="key-bar">
+      <input id="api-key" placeholder="请输入 API Key" type="password">
+      <button id="save-key" type="button">进入</button>
+    </div>
+  </div>
+  <div id="content"><div class="empty">请输入 API Key 后进入</div></div>
+  <div class="tabs">
+    <button data-tab="overview" class="active">今日</button>
+    <button data-tab="customers">客户</button>
+    <button data-tab="followups">跟进</button>
+    <button data-tab="notices">通知</button>
+  </div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let apiKey = localStorage.getItem("mobile_api_key") || "";
+let tab = "overview";
+const TABS = ["overview", "customers", "followups", "notices"];
+
+function headers() {
+  return apiKey ? { "X-API-Key": apiKey } : {};
+}
+
+async function getJSON(url) {
+  const res = await fetch(url, { headers: headers() });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  return res.json();
+}
+
+function esc(v) {
+  return String(v == null ? "" : v).replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function card(title, lines) {
+  return `<div class="card"><h3>${esc(title)}</h3>${lines.map((l) => `<p>${l}</p>`).join("")}</div>`;
+}
+
+async function loadOverview() {
+  const [customers, leads, followup] = await Promise.all([
+    getJSON("/api/v1/customers").catch(() => ({ customers: [] })),
+    getJSON("/api/v1/leads/stats").catch(() => ({})),
+    getJSON("/api/v1/followups/tasks?status=pending").catch(() => ({ tasks: [] })),
+  ]);
+  const won = (customers.customers || []).filter((c) => (c.stage || "") === "won").length;
+  $("content").innerHTML = `
+    <div class="kpis">
+      <div class="kpi"><div class="n">${(customers.customers || []).length}</div><div class="l">客户</div></div>
+      <div class="kpi"><div class="n">${(followup.tasks || []).length}</div><div class="l">待跟进</div></div>
+      <div class="kpi"><div class="n">${won}</div><div class="l">成交</div></div>
+    </div>
+    <div class="list">${(customers.customers || []).slice(0, 8).map((c) => card(c.nickname || c.display_id || c.session_id, [
+      "阶段：" + esc(c.stage || "new") + " · 意向：" + esc(c.intent_level || "-"),
+      "来源：" + esc(c.source || "-") + " · 更新：" + esc(c.updated_at || "-"),
+    ])).join("") || '<div class="empty">暂无客户</div>'}</div>`;
+}
+
+async function loadCustomers() {
+  const data = await getJSON("/api/v1/customers").catch(() => ({ customers: [] }));
+  $("content").innerHTML = `<div class="list">${(data.customers || []).map((c) => card(c.nickname || c.display_id || c.session_id, [
+    "阶段：" + esc(c.stage || "new") + " · 意向：" + esc(c.intent_level || "-"),
+    "来源：" + esc(c.source || "-"),
+  ])).join("") || '<div class="empty">暂无客户</div>'}</div>`;
+}
+
+async function loadFollowups() {
+  const data = await getJSON("/api/v1/followups/tasks").catch(() => ({ tasks: [] }));
+  $("content").innerHTML = `<div class="list">${(data.tasks || []).map((t) => card(t.customer_name || t.session_id || "跟进任务", [
+    "类型：" + esc(t.task_type || "-") + " · 状态：" + esc(t.status || "-"),
+    "到期：" + esc(t.due_at || "-"),
+  ])).join("") || '<div class="empty">暂无跟进任务</div>'}</div>`;
+}
+
+async function loadNotices() {
+  const data = await getJSON("/api/v1/notifications").catch(() => ({ notifications: [] }));
+  $("content").innerHTML = `<div class="list">${(data.notifications || []).map((n) => card(n.target || "通知", [
+    esc(n.content || ""),
+    "状态：" + esc(n.status || "-") + " · " + esc(n.created_at || "-"),
+  ])).join("") || '<div class="empty">暂无通知</div>'}</div>`;
+}
+
+async function loadTab() {
+  if (!apiKey) { $("content").innerHTML = '<div class="empty">请输入 API Key 后进入</div>'; return; }
+  try {
+    if (tab === "overview") await loadOverview();
+    else if (tab === "customers") await loadCustomers();
+    else if (tab === "followups") await loadFollowups();
+    else await loadNotices();
+  } catch (e) {
+    $("content").innerHTML = '<div class="empty">加载失败：' + esc(e.message) + '，请检查 API Key</div>';
+  }
+}
+
+$("save-key").addEventListener("click", () => {
+  apiKey = $("api-key").value.trim();
+  localStorage.setItem("mobile_api_key", apiKey);
+  loadTab();
+});
+document.querySelectorAll(".tabs button").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    tab = btn.dataset.tab;
+    document.querySelectorAll(".tabs button").forEach((b) => b.classList.toggle("active", b === btn));
+    loadTab();
+  });
+});
+if (apiKey) { $("api-key").value = apiKey; loadTab(); }
+</script>
+</body>
+</html>

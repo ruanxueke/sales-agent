@@ -1,0 +1,100 @@
+# 运行时数据
+data/
+vector_store/
+wechat_bridge/data/
+wechat_bridge/config.json
+wechat_bridge/config.desktop.local.json
+wechat_bridge/instance.json
+
+# 密钥与环境（禁止提交）
+.env
+.env.*
+server.env
+*.env
+!.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+*.bin
+
+# Python
+*.pyc
+__pycache__/
+.pytest_cache/
+*.pyo
+*.egg-info/
+.venv/
+venv/
+env/
+node_modules/
+**/node_modules/
+celerybeat-schedule.dat
+celerybeat-schedule.dir
+
+# 数据库与本地状态
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+vision_agent_data/
+wechat-bridge/bot-config.json
+wechat-bridge/login-qr.png
+wechat_bridge/config*.json
+!wechat_bridge/config.example.json
+!wechat_bridge/config.dedicated-account.example.json
+wechat_bridge/instance_binding.json
+wechat_bridge/resolved_account.json
+
+# 历史版本与发布产物
+release/
+releases/
+outputs/
+*.zip
+*.tar.gz
+*.7z
+*.rar
+
+# 桌面端构建产物
+desktop-client/dist/
+desktop-client/node_modules/
+desktop-client/.vite/
+
+# 日志
+*.log
+logs/
+*.err
+
+# 本地工具产物
+*.tmp
+*.bak
+_restore_*.py
+_find_*.py
+qr.png
+wechat_qr.png
+secure-store-test.bin
+
+# 操作系统和编辑器
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+
+# Local WeChat bot runtime and third-party binaries
+wechat-bot/bot-config.json
+wechat-bot/wcf/*.dll
+wechat-bot/wcf/*.bin
+
+# Local WeChat screenshots may contain customer conversations
+docs/wechat_*.png
+
+# Personal WeChat login and runtime state
+wechat-bot/qrcode*.png
+wechat-bot/login-qr.png
+wechat-bot/qrcode_url.txt
+wechat-bot/*.memory-card.json
+
+# Excluded WCF integration kept only for local development
+wechat-bot/bot.mjs
+wechat-bot/wcf/

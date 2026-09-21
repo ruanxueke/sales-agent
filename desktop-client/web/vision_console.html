@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>视觉执行器工作台</title>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--line:#e2e8f0;--text:#0f172a;--muted:#64748b;--primary:#2563eb;--danger:#dc2626;--ok:#16a34a;--warn:#d97706;--sidebar:#0f172a;--sidebar-text:#94a3b8;--radius:8px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+.app{display:flex;min-height:100vh}
+aside{width:220px;background:var(--sidebar);color:var(--sidebar-text);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;flex-shrink:0}
+.brand{padding:16px;font-size:15px;font-weight:600;color:#fff;border-bottom:1px solid rgba(255,255,255,.08)}
+.brand small{display:block;font-size:11px;font-weight:400;color:var(--sidebar-text);margin-top:4px}
+.nav{padding:12px 8px;display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:6px;color:var(--sidebar-text);text-decoration:none;font-size:13px}
+.nav a.active,.nav a:hover{background:#1e293b;color:#fff}
+.nav .icon{width:18px;text-align:center}
+aside .foot{margin-top:auto;padding:12px;font-size:11px;border-top:1px solid rgba(255,255,255,.08)}
+main{flex:1;min-width:0;padding:20px 24px}
+.topbar{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:18px}
+.topbar h1{font-size:20px;font-weight:600}
+.controls{display:flex;align-items:center;gap:10px}
+input[type=text],input[type=password],input[type=datetime-local],select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:var(--radius);font-size:13px;background:#fff;color:var(--text)}
+input:focus,select:focus,textarea:focus{outline:2px solid #bfdbfe;border-color:var(--primary)}
+button{border:1px solid var(--line);background:#fff;padding:8px 14px;border-radius:var(--radius);font-size:13px;cursor:pointer;transition:.15s}
+button:hover{border-color:var(--primary);color:var(--primary)}
+button.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+button.primary:hover{background:#1d4ed8;color:#fff}
+button.danger{border-color:#fecaca;color:var(--danger)}
+button.danger:hover{background:#fef2f2}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:500}
+.pill.ok{background:#dcfce7;color:var(--ok)}
+.pill.warn{background:#fef3c7;color:var(--warn)}
+.pill.danger{background:#fee2e2;color:var(--danger)}
+.pill.muted{background:#e2e8f0;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+.kpi .label{color:var(--muted);font-size:12px;margin-bottom:6px}
+.kpi .value{font-size:22px;font-weight:650;letter-spacing:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:16px}
+.card h3{font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--muted);font-weight:500;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid #f1f5f9;vertical-align:top;word-break:break-all}
+tr:last-child td{border-bottom:none}
+.empty{color:var(--muted);text-align:center;padding:22px}
+.form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:12px}
+.form-actions{display:flex;gap:10px;align-items:center}
+.status-line{display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:13px}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+.mono{font-family:Consolas,monospace;font-size:12px}
+.mt{margin-top:14px}
+.right{text-align:right}
+@media(max-width:900px){.app{flex-direction:column}aside{width:100%;height:auto;position:static}main{padding:14px}.grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <div class="brand">视觉执行器工作台<small>企业微信 / 个人微信 · 受管全自动</small></div>
+    <div class="nav">
+      <a class="active" href="#overview"><span class="icon">🏠</span>状态总览</a>
+      <a href="#instances"><span class="icon">🖥️</span>实例列表</a>
+      <a href="#tasks"><span class="icon">📤</span>主动触达</a>
+      <a href="#audit"><span class="icon">📜</span>审计日志</a>
+      <a href="/static/console.html"><span class="icon">📊</span>返回中台</a>
+    </div>
+    <div class="foot">默认关闭 · 管理员授权后开启</div>
+  </aside>
+  <main>
+    <div class="topbar">
+      <h1>视觉执行器工作台</h1>
+      <div class="controls">
+        <input type="password" id="apiKey" placeholder="API Key" style="width:220px" autocomplete="off">
+        <button onclick="saveKey()">保存</button>
+        <span class="pill muted" id="connPill">未连接</span>
+      </div>
+    </div>
+
+    <div class="status-line" style="margin-bottom:16px">
+      <span id="globalPill" class="pill muted">加载中</span>
+      <span id="lastSeen" class="small"></span>
+      <span id="modelInfo" class="small"></span>
+    </div>
+
+    <div id="overview" class="grid">
+      <div class="kpi"><div class="label">今日发送</div><div class="value" id="kpiSends">-</div></div>
+      <div class="kpi"><div class="label">每日上限</div><div class="value" id="kpiLimit">-</div></div>
+      <div class="kpi"><div class="label">待执行任务</div><div class="value" id="kpiPending">-</div></div>
+      <div class="kpi"><div class="label">在线实例</div><div class="value" id="kpiInstances">-</div></div>
+    </div>
+
+    <div id="instances" class="card">
+      <h3>🖥️ 实例列表</h3>
+      <div style="overflow:auto"><table id="instancesTable"><thead><tr><th>实例</th><th>通道</th><th>状态</th><th>当前会话</th><th>最后心跳</th><th>今日发送</th><th>操作</th></tr></thead><tbody><tr><td colspan="7" class="empty">暂无数据</td></tr></tbody></table></div>
+    </div>
+
+    <div id="tasks" class="card">
+      <h3>📤 主动触达任务</h3>
+      <form id="taskForm" onsubmit="createTask(event)">
+        <div class="form-row">
+          <select id="taskMode"><option value="wecom">企业微信</option><option value="wechat">个人微信</option></select>
+          <input type="text" id="taskContact" placeholder="联系人名称（显示名）" required>
+          <input type="text" id="taskInstance" placeholder="实例 ID（留空自动分配）">
+          <input type="datetime-local" id="taskScheduled" title="定时发送，留空立即执行">
+        </div>
+        <textarea id="taskContent" rows="3" placeholder="发送内容" required></textarea>
+        <div class="form-actions" style="margin-top:10px">
+          <button type="submit" class="primary">创建任务</button>
+          <button type="button" onclick="loadTasks()">刷新</button>
+          <span class="small muted">定时格式：年-月-日 时:分，留空表示立即执行</span>
+        </div>
+      </form>
+      <div style="overflow:auto;margin-top:14px"><table id="tasksTable"><thead><tr><th>任务</th><th>通道</th><th>联系人</th><th>内容</th><th>状态</th><th>创建时间</th><th>发送时间</th><th>备注</th><th>操作</th></tr></thead><tbody><tr><td colspan="9" class="empty">暂无数据</td></tr></tbody></table></div>
+    </div>
+
+    <div id="human" class="card">
+      <h3>🤝 人工接管</h3>
+      <div style="overflow:auto"><table id="humanTable"><thead><tr><th>实例</th><th>联系人</th><th>接管时间</th><th>操作</th></tr></thead><tbody><tr><td colspan="4" class="empty">当前无人工接管会话</td></tr></tbody></table></div>
+    </div>
+
+    <div id="audit" class="card">
+      <h3>📜 审计日志</h3>
+      <div class="form-row" style="grid-template-columns:180px 180px 1fr">
+        <input type="text" id="auditInstance" placeholder="实例 ID">
+        <input type="text" id="auditAction" placeholder="动作，如 sent / scan">
+        <button onclick="loadAudit()">查询</button>
+      </div>
+      <div style="overflow:auto"><table id="auditTable"><thead><tr><th>时间</th><th>实例</th><th>动作</th><th>详情</th></tr></thead><tbody><tr><td colspan="4" class="empty">暂无数据</td></tr></tbody></table></div>
+    </div>
+  </main>
+</div>
+
+<script>
+const API_KEY_KEY = "sales_api_key";
+const keyInput = document.getElementById("apiKey");
+keyInput.value = localStorage.getItem(API_KEY_KEY) || "";
+let refreshTimer = null;
+
+async function api(path, options = {}) {
+  const key = localStorage.getItem(API_KEY_KEY) || "";
+  const headers = Object.assign({}, options.headers || {}, key ? { "X-API-Key": key } : {});
+  if (options.body) headers["Content-Type"] = "application/json";
+  const res = await fetch(path, Object.assign({}, options, { headers, body: options.body ? JSON.stringify(options.body) : undefined }));
+  if (res.status === 401) { setConn("需要 API Key", "danger"); throw new Error("401"); }
+  if (!res.ok) { const t = await res.text(); throw new Error(t.slice(0, 120)); }
+  return res.json();
+}
+
+function saveKey() { localStorage.setItem(API_KEY_KEY, keyInput.value.trim()); loadAll(); }
+
+function setConn(text, kind = "muted") {
+  const p = document.getElementById("connPill");
+  p.textContent = text;
+  p.className = "pill " + kind;
+}
+
+function esc(v) {
+  return String(v == null ? "" : v).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function badge(status) {
+  const map = { pending: "warn", running: "warn", sent: "ok", failed: "danger", cancelled: "muted", skipped: "muted", paused: "warn", blocked: "danger", offline: "muted", idle: "ok" };
+  return `<span class="pill ${map[status] || "muted"}">${esc(status)}</span>`;
+}
+
+async function loadAll() {
+  try {
+    await Promise.all([loadStatus(), loadTasks(), loadAudit()]);
+    setConn("已连接", "ok");
+  } catch (e) {
+    if (e.message !== "401") setConn("连接失败", "danger");
+  }
+}
+
+async function loadStatus() {
+  const data = await api("http://127.0.0.1:5000/api/v1/vision/status");
+  document.getElementById("kpiSends").textContent = data.sends_today ?? 0;
+  document.getElementById("kpiLimit").textContent = data.daily_limit ?? "-";
+  document.getElementById("kpiPending").textContent = data.tasks_pending ?? 0;
+  const instances = Object.values(data.instances || {});
+  document.getElementById("kpiInstances").textContent = instances.length;
+  document.getElementById("lastSeen").textContent = "最后心跳：" + (data.last_seen || "-");
+  document.getElementById("modelInfo").textContent = "视觉模型：" + (data.model || "-") + " · 轮询 " + (data.poll_interval || 2) + "s";
+  const g = document.getElementById("globalPill");
+  if (data.paused || data.status === "paused" || data.status === "blocked") {
+    g.textContent = "全局暂停 / 熔断"; g.className = "pill danger";
+  } else {
+    g.textContent = data.enabled ? "执行器已启用" : "执行器默认关闭"; g.className = data.enabled ? "pill ok" : "pill warn";
+  }
+  renderInstances(instances);
+  renderHuman(data.human_mode_contacts || {});
+}
+
+function renderInstances(instances) {
+  const body = document.getElementById("instancesTable").querySelector("tbody");
+  if (!instances.length) { body.innerHTML = '<tr><td colspan="7" class="empty">暂无实例</td></tr>'; return; }
+  body.innerHTML = instances.map(inst => `
+    <tr>
+      <td class="mono">${esc(inst.id)}</td>
+      <td>${inst.mode === "wechat" ? "个人微信" : "企业微信"}</td>
+      <td>${badge(inst.paused ? "paused" : (inst.status || "offline"))}</td>
+      <td>${esc(inst.contact || "-")}</td>
+      <td class="small">${esc(inst.last_seen || "-")}</td>
+      <td>${inst.sends_today ?? 0}</td>
+      <td><button class="small" onclick="toggleInstance('${esc(inst.id)}', ${inst.paused ? 0 : 1})">${inst.paused ? "恢复" : "暂停"}</button></td>
+    </tr>`).join("");
+}
+
+function renderHuman(map) {
+  const body = document.getElementById("humanTable").querySelector("tbody");
+  const rows = Object.values(map || {});
+  if (!rows.length) { body.innerHTML = '<tr><td colspan="4" class="empty">当前无人工接管会话</td></tr>'; return; }
+  body.innerHTML = rows.map(r => `
+    <tr>
+      <td class="mono">${esc(r.instance_id || "-")}</td>
+      <td>${esc(r.contact)}</td>
+      <td class="small">${esc(r.time || "-")}</td>
+      <td><button class="small" onclick="resolveHuman('${esc(r.instance_id || "")}','${esc(r.contact)}')">恢复自动回复</button></td>
+    </tr>`).join("");
+}
+
+async function toggleInstance(id, paused) {
+  await api("http://127.0.0.1:5000/api/v1/vision/pause", { method: "POST", body: { paused: !!paused, instance_id: id } });
+  loadStatus();
+}
+
+async function resolveHuman(instance, contact) {
+  await api("http://127.0.0.1:5000/api/v1/vision/handover/resolve", { method: "POST", body: { instance_id: instance, contact, active: false } });
+  loadStatus();
+}
+
+async function createTask(e) {
+  e.preventDefault();
+  const scheduledRaw = document.getElementById("taskScheduled").value;
+  let scheduled = "";
+  if (scheduledRaw) {
+    const d = new Date(scheduledRaw);
+    const pad = n => String(n).padStart(2, "0");
+    scheduled = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+  }
+  await api("http://127.0.0.1:5000/api/v1/vision/tasks", {
+    method: "POST",
+    body: {
+      mode: document.getElementById("taskMode").value,
+      contact: document.getElementById("taskContact").value.trim(),
+      content: document.getElementById("taskContent").value.trim(),
+      instance_id: document.getElementById("taskInstance").value.trim(),
+      scheduled_at: scheduled,
+    },
+  });
+  document.getElementById("taskForm").reset();
+  loadTasks();
+}
+
+async function loadTasks() {
+  const data = await api("http://127.0.0.1:5000/api/v1/vision/tasks?limit=100");
+  const tasks = data.tasks || [];
+  const body = document.getElementById("tasksTable").querySelector("tbody");
+  if (!tasks.length) { body.innerHTML = '<tr><td colspan="9" class="empty">暂无任务</td></tr>'; return; }
+  body.innerHTML = tasks.map(t => `
+    <tr>
+      <td class="mono">${esc(t.id)}</td>
+      <td>${t.mode === "wechat" ? "个人微信" : "企业微信"}</td>
+      <td>${esc(t.contact)}</td>
+      <td>${esc(t.content)}</td>
+      <td>${badge(t.status)}</td>
+      <td class="small">${esc(t.created_at || "-")}</td>
+      <td class="small">${esc(t.sent_at || "-")}</td>
+      <td class="small muted">${esc(t.note || "")}</td>
+      <td>${t.status === "pending" ? `<button class="small danger" onclick="cancelTask('${esc(t.id)}')">取消</button>` : ""}</td>
+    </tr>`).join("");
+}
+
+async function cancelTask(id) {
+  await api("http://127.0.0.1:5000/api/v1/vision/tasks/cancel", { method: "POST", body: { task_id: id } });
+  loadTasks();
+}
+
+async function loadAudit() {
+  const inst = document.getElementById("auditInstance").value.trim();
+  const action = document.getElementById("auditAction").value.trim();
+  let url = "http://127.0.0.1:5000/api/v1/vision/audit?limit=200";
+  if (inst) url += "&instance_id=" + encodeURIComponent(inst);
+  if (action) url += "&action=" + encodeURIComponent(action);
+  const data = await api(url);
+  const rows = data.records || [];
+  const body = document.getElementById("auditTable").querySelector("tbody");
+  if (!rows.length) { body.innerHTML = '<tr><td colspan="4" class="empty">暂无数据</td></tr>'; return; }
+  body.innerHTML = rows.map(r => `
+    <tr>
+      <td class="small" style="white-space:nowrap">${esc(r.time || "-")}</td>
+      <td class="mono small">${esc(r.instance_id || "-")}</td>
+      <td>${esc(r.action)}</td>
+      <td class="small muted">${esc(JSON.stringify(r.detail || {}))}</td>
+    </tr>`).join("");
+}
+
+document.querySelectorAll(".nav a[href^='#']").forEach(a => {
+  a.addEventListener("click", () => {
+    document.querySelectorAll(".nav a").forEach(x => x.classList.remove("active"));
+    a.classList.add("active");
+  });
+});
+
+loadAll();
+refreshTimer = setInterval(loadAll, 8000);
+</script>
+</body>
+</html>

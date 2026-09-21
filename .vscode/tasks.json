@@ -1,0 +1,58 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "运行销售智能体控制台",
+      "type": "process",
+      "command": "C:\\Program Files\\Python311\\python.exe",
+      "args": [
+        "main.py",
+        "--channel",
+        "console"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "启动本地 API",
+      "type": "process",
+      "command": "C:\\Program Files\\Python311\\python.exe",
+      "args": [
+        "api_server.py"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "运行完整质量门",
+      "type": "process",
+      "command": "C:\\Program Files\\Python311\\python.exe",
+      "args": [
+        "scripts\\quality_gate.py"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "检查 main.py 语法",
+      "type": "process",
+      "command": "C:\\Program Files\\Python311\\python.exe",
+      "args": [
+        "-m",
+        "py_compile",
+        "main.py"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

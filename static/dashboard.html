@@ -1,0 +1,1073 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>天赋家 · 销售智能体数据报表</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --panel: #ffffff;
+    --line: #dfe3e8;
+    --text: #1f2933;
+    --muted: #6b7280;
+    --brand: #0f766e;
+    --brand-soft: #e6f4f2;
+    --warn: #b45309;
+    --warn-soft: #fdf0dd;
+    --danger: #b91c1c;
+    --danger-soft: #fdeaea;
+    --ok: #15803d;
+    --ok-soft: #e8f6ec;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+    font-size: 14px;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 20px 16px 48px; }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  h1 { font-size: 20px; margin: 0; font-weight: 600; }
+  .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .actions { display: flex; gap: 8px; align-items: center; }
+  button {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 7px 12px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  button:hover { border-color: var(--brand); color: var(--brand); }
+  a.btn {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 7px 12px;
+    text-decoration: none;
+    font-size: 13px;
+    display: inline-block;
+  }
+  a.btn:hover { border-color: var(--brand); color: var(--brand); }
+  .tabs { display: flex; gap: 8px; margin: 18px 0 16px; border-bottom: 1px solid var(--line); padding-bottom: 0; }
+  .tabs button { border: none; border-bottom: 2px solid transparent; border-radius: 0; padding: 9px 14px; }
+  .tabs button.active { color: var(--brand); border-bottom-color: var(--brand); font-weight: 600; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+  .kpi .label { color: var(--muted); font-size: 12px; }
+  .kpi .value { font-size: 22px; font-weight: 600; margin-top: 4px; }
+  .kpi .hint { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 720px) { .row { grid-template-columns: 1fr; } }
+  .box { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px; }
+  .box h2 { font-size: 15px; margin: 0 0 10px; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 500; }
+  tr:last-child td { border-bottom: none; }
+  .bar { height: 8px; border-radius: 4px; background: var(--brand-soft); overflow: hidden; min-width: 24px; }
+  .bar > i { display: block; height: 100%; background: var(--brand); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+  .badge.ok { background: var(--ok-soft); color: var(--ok); }
+  .badge.warn { background: var(--warn-soft); color: var(--warn); }
+  .badge.danger { background: var(--danger-soft); color: var(--danger); }
+  .badge.muted { background: #eef0f3; color: var(--muted); }
+  .empty { color: var(--muted); text-align: center; padding: 24px 0; }
+  .error { color: var(--danger); background: var(--danger-soft); border-radius: 6px; padding: 10px 12px; margin-bottom: 12px; }
+  .loading { color: var(--muted); padding: 20px 0; text-align: center; }
+  .chart { display: flex; align-items: flex-end; gap: 8px; height: 120px; padding-top: 8px; }
+  .chart .col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
+  .chart .bar-wrap { width: 100%; height: 100px; display: flex; align-items: flex-end; }
+  .chart .bar-fill { width: 100%; background: var(--brand); border-radius: 4px 4px 0 0; min-height: 2px; }
+  .chart .day { font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .chart .val { font-size: 11px; color: var(--text); }
+  .toolbar { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 12px; }
+  .toolbar .group { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .toolbar input[type=file], .toolbar select, .toolbar input[type=search] {
+    border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; background: var(--panel); color: var(--text); font-size: 13px;
+  }
+  .toolbar a { color: var(--brand); text-decoration: none; font-size: 13px; }
+  .lead-actions { display: flex; gap: 4px; flex-wrap: wrap; }
+  .lead-actions button { padding: 4px 8px; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1>天赋家 · 销售智能体数据报表</h1>
+      <div class="sub" id="updated">加载中...</div>
+    </div>
+    <div class="actions">
+      <button id="refresh" type="button">刷新数据</button>
+      <button id="set-api-key" type="button">设置接口Key</button>
+      <a class="btn" href="/static/console.html">打开中台控制台</a>
+    </div>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button id="tab-conversion" type="button" role="tab" aria-selected="true" class="active">转化报表</button>
+    <button id="tab-followups" type="button" role="tab" aria-selected="false">跟进提醒</button>
+    <button id="tab-dashboard" type="button" role="tab" aria-selected="false">数据看板</button>
+    <button id="tab-monitor" type="button" role="tab" aria-selected="false">监控状态</button>
+    <button id="tab-leads" type="button" role="tab" aria-selected="false">线索管理</button>
+    <button id="tab-orders" type="button" role="tab" aria-selected="false">订单售后</button>
+    <button id="tab-followup-plan" type="button" role="tab" aria-selected="false">自动跟进</button>
+    <button id="tab-quality" type="button" role="tab" aria-selected="false">质检陪练</button>
+    <button id="tab-knowledge" type="button" role="tab" aria-selected="false">知识库</button>
+    <button id="tab-system" type="button" role="tab" aria-selected="false">系统安全</button>
+  </div>
+
+  <div id="error" class="error" style="display:none"></div>
+
+  <section id="panel-conversion" class="panel active" role="tabpanel">
+    <div class="kpis" id="conversion-kpis"></div>
+    <div class="row">
+      <div class="box">
+        <h2>转化漏斗</h2>
+        <div id="conversion-funnel"></div>
+      </div>
+      <div class="box">
+        <h2>近 30 天新增客户</h2>
+        <div id="conversion-daily"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="panel-followups" class="panel" role="tabpanel">
+    <div class="kpis" id="followup-kpis"></div>
+    <div class="box">
+      <h2>待跟进客户</h2>
+      <div id="followup-table"></div>
+    </div>
+  </section>
+
+  <section id="panel-dashboard" class="panel" role="tabpanel">
+    <div class="kpis" id="dashboard-kpis"></div>
+    <div class="row">
+      <div class="box">
+        <h2>阶段分布</h2>
+        <div id="dashboard-stages"></div>
+      </div>
+      <div class="box">
+        <h2>近 7 天新增客户</h2>
+        <div id="dashboard-daily"></div>
+      </div>
+    </div>
+    <div class="box" style="margin-top:12px">
+      <h2>LLM 用量</h2>
+      <div id="dashboard-usage"></div>
+    </div>
+  </section>
+
+  <section id="panel-monitor" class="panel" role="tabpanel">
+    <div class="kpis" id="monitor-kpis"></div>
+    <div class="box">
+      <h2>接口实时状态（近 5 分钟）</h2>
+      <div id="monitor-table"></div>
+    </div>
+  </section>
+
+  <section id="panel-leads" class="panel" role="tabpanel">
+    <div class="kpis" id="leads-kpis"></div>
+    <div class="box">
+      <div class="toolbar">
+        <div class="group">
+          <input type="file" id="lead-file" accept=".csv,.xlsx,.xlsm">
+          <button id="lead-import" type="button">导入线索</button>
+          <a id="lead-template" href="/api/v1/leads/import/template" download>下载导入模板</a>
+          <button id="lead-recycle" type="button">执行公海回收</button>
+        </div>
+        <div class="group">
+          <select id="lead-status-filter">
+            <option value="">全部状态</option>
+            <option value="pending">公海</option>
+            <option value="assigned">已分配</option>
+            <option value="claimed">已认领</option>
+            <option value="following">跟进中</option>
+            <option value="won">已成交</option>
+            <option value="lost">已流失</option>
+          </select>
+          <input type="search" id="lead-keyword" placeholder="姓名/手机/微信号">
+          <button id="lead-search" type="button">查询</button>
+        </div>
+      </div>
+      <div id="leads-table"></div>
+    </div>
+    <div class="box" style="margin-top:12px">
+      <h2>渠道来源分布</h2>
+      <div id="leads-source"></div>
+    </div>
+  </section>
+
+  <section id="panel-orders" class="panel" role="tabpanel">
+    <div class="kpis" id="orders-kpis"></div>
+    <div class="box">
+      <div class="toolbar">
+        <div class="group">
+          <input id="order-name" placeholder="客户姓名">
+          <input id="order-phone" placeholder="手机号">
+          <input id="order-product" placeholder="课程/产品">
+          <input id="order-amount" type="number" step="0.01" placeholder="金额">
+          <button id="order-create" type="button">新建订单</button>
+        </div>
+      </div>
+      <div id="orders-table"></div>
+    </div>
+    <div class="box" style="margin-top:12px">
+      <h2>售后列表</h2>
+      <div id="after-sales-table"></div>
+    </div>
+  </section>
+
+  <section id="panel-followup-plan" class="panel" role="tabpanel">
+    <div class="kpis" id="followup-kpis"></div>
+    <div class="box">
+      <div class="toolbar">
+        <div class="group">
+          <input id="followup-session" placeholder="客户ID/session_id">
+          <button id="followup-plan" type="button">创建跟进计划</button>
+          <button id="followup-dispatch" type="button">立即派发到期跟进</button>
+        </div>
+      </div>
+      <div id="followup-table"></div>
+    </div>
+  </section>
+
+  <section id="panel-quality" class="panel" role="tabpanel">
+    <div class="kpis" id="quality-kpis"></div>
+    <div class="box">
+      <div class="toolbar">
+        <div class="group">
+          <input id="quality-session" placeholder="客户ID/session_id">
+          <button id="quality-check" type="button">执行质检</button>
+          <select id="coach-stage">
+            <option value="异议处理">异议处理</option>
+            <option value="价格异议">价格异议</option>
+            <option value="需求挖掘">需求挖掘</option>
+            <option value="成交推进">成交推进</option>
+            <option value="售后回访">售后回访</option>
+          </select>
+          <button id="coach-generate" type="button">生成陪练</button>
+        </div>
+      </div>
+      <div id="coach-output" style="color:var(--muted);padding:4px 0 10px"></div>
+      <div id="quality-table"></div>
+    </div>
+  </section>
+
+  <section id="panel-knowledge" class="panel" role="tabpanel">
+    <div class="kpis" id="knowledge-kpis"></div>
+    <div class="box">
+      <div class="toolbar">
+        <div class="group">
+          <input type="file" id="knowledge-file" accept=".txt,.md,.pdf,.docx,.csv">
+          <button id="knowledge-upload" type="button">上传知识库</button>
+          <button id="knowledge-rebuild" type="button">重建向量库</button>
+        </div>
+        <div class="group">
+          <input id="knowledge-text" placeholder="直接添加一段知识文本">
+          <button id="knowledge-add-text" type="button">添加文本</button>
+        </div>
+      </div>
+      <div id="knowledge-files"></div>
+    </div>
+    <div class="box" style="margin-top:12px">
+      <h2>版本记录</h2>
+      <div id="knowledge-versions"></div>
+    </div>
+  </section>
+
+  <section id="panel-system" class="panel" role="tabpanel">
+    <div class="box">
+      <h2>数据导出</h2>
+      <div class="toolbar">
+        <div class="group">
+          <button type="button" data-export="/api/v1/export/customers.csv" data-name="customers.csv">客户 CSV</button>
+          <button type="button" data-export="/api/v1/export/leads.csv" data-name="leads.csv">线索 CSV</button>
+          <button type="button" data-export="/api/v1/export/orders.csv" data-name="orders.csv">订单 CSV</button>
+          <button type="button" data-export="/api/v1/export/quality.csv" data-name="quality.csv">质检 CSV</button>
+        </div>
+      </div>
+    </div>
+    <div class="box" style="margin-top:12px">
+      <h2>审计日志</h2>
+      <div id="audit-table"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const tabs = [
+  ["conversion", "conversion"],
+  ["followups", "followups"],
+  ["dashboard", "dashboard"],
+  ["monitor", "monitor"],
+  ["leads", "leads"],
+  ["orders", "orders"],
+  ["followup-plan", "followup-plan"],
+  ["quality", "quality"],
+  ["knowledge", "knowledge"],
+  ["system", "system"],
+];
+let state = {
+  conversion: null, followups: null, dashboard: null, monitor: null,
+  leads: { list: [], stats: null },
+  orders: { orders: [], after_sales: [], stats: null },
+  followup: { tasks: [], stats: null },
+  quality: { reports: [], stats: null },
+  knowledge: { files: [], versions: [], stats: null },
+  system: { logs: [] },
+};
+const API_KEY = localStorage.getItem("sales_api_key") || "";
+
+function apiHeaders(extra) {
+  return Object.assign({}, extra || {}, API_KEY ? { "X-API-Key": API_KEY } : {});
+}
+
+function showError(msg) {
+  const el = $("error");
+  el.style.display = msg ? "block" : "none";
+  el.textContent = msg || "";
+}
+
+async function fetchJSON(url) {
+  const res = await fetch(url, { headers: apiHeaders() });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  return res.json();
+}
+
+async function postJSON(url, body) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: apiHeaders({ "Content-Type": "application/json" }),
+    body: JSON.stringify(body || {}),
+  });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  return res.json();
+}
+
+function esc(value) {
+  return String(value == null ? "" : value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function fmt(n) {
+  if (n == null) return "0";
+  const num = Number(n);
+  return Number.isFinite(num) ? num.toLocaleString("zh-CN") : "0";
+}
+
+function bar(value, max) {
+  const pct = max > 0 ? Math.round((Number(value) || 0) / max * 100) : 0;
+  return `<div class="bar"><i style="width:${Math.max(pct, 2)}%"></i></div>`;
+}
+
+function kpi(label, value, hint) {
+  const text = typeof value === "string" ? value : fmt(value);
+  return `<div class="kpi"><div class="label">${esc(label)}</div><div class="value">${esc(text)}</div>${hint ? `<div class="hint">${esc(hint)}</div>` : ""}</div>`;
+}
+
+function renderConversion() {
+  const d = state.conversion;
+  if (!d) return;
+  $("conversion-kpis").innerHTML =
+    kpi("总客户", d.total_customers) +
+    kpi("意向明确率", d.rates.l3_rate + "%", "L3+ / 总客户") +
+    kpi("报名转化率", d.rates.enrolled_rate + "%", "已报名 / L3+") +
+    kpi("成交转化率", d.rates.won_rate + "%", "已成交 / 已报名");
+
+  const rows = d.funnel.map((f) => `
+    <tr>
+      <td>${f.label}</td>
+      <td class="num">${fmt(f.count)}</td>
+      <td class="num">${f.ratio}%</td>
+      <td style="min-width:120px">${bar(f.count, d.funnel[0].count)}</td>
+    </tr>`).join("");
+  $("conversion-funnel").innerHTML = `
+    <table>
+      <thead><tr><th>阶段</th><th class="num">客户数</th><th class="num">占比</th><th>分布</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="4" class="empty">暂无客户数据</td></tr>'}</tbody>
+    </table>`;
+
+  if (!d.daily_new.length) {
+    $("conversion-daily").innerHTML = '<div class="empty">近 30 天暂无新增客户</div>';
+    return;
+  }
+  const max = Math.max(...d.daily_new.map((x) => x.count));
+  $("conversion-daily").innerHTML = `<div class="chart">${d.daily_new.map((x) => `
+    <div class="col">
+      <div class="val">${x.count}</div>
+      <div class="bar-wrap"><div class="bar-fill" style="height:${Math.max(x.count / max * 100, 3)}%"></div></div>
+      <div class="day">${x.date.slice(5)}</div>
+    </div>`).join("")}</div>`;
+}
+
+function statusBadge(status) {
+  const cls = status === "已逾期" ? "danger" : (status === "到期" || status === "即将到期") ? "warn" : status === "待安排" ? "muted" : "ok";
+  return `<span class="badge ${cls}">${status}</span>`;
+}
+
+function renderFollowups() {
+  const d = state.followups;
+  if (!d) return;
+  $("followup-kpis").innerHTML =
+    kpi("已逾期", d.summary["已逾期"]) +
+    kpi("今日到期", d.summary["到期"]) +
+    kpi("即将到期", d.summary["即将到期"]) +
+    kpi("待安排", d.summary["待安排"]);
+
+  const rows = d.followups.map((r) => `
+    <tr>
+      <td>${r.nickname || r.session_id}</td>
+      <td>${r.stage_label}</td>
+      <td>${r.intent_level || "-"}</td>
+      <td>${r.goal || "-"}</td>
+      <td>${r.updated_at || "-"}</td>
+      <td>${r.next_follow_up || "-"}</td>
+      <td>${statusBadge(r.status)}</td>
+    </tr>`).join("");
+  $("followup-table").innerHTML = `
+    <table>
+      <thead><tr><th>客户</th><th>阶段</th><th>意向</th><th>目标</th><th>最近活跃</th><th>下次跟进</th><th>状态</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="7" class="empty">暂无需要跟进的客户</td></tr>'}</tbody>
+    </table>`;
+}
+
+function renderDashboard() {
+  const d = state.dashboard;
+  if (!d) return;
+  const usage = d.usage && d.usage[0];
+  $("dashboard-kpis").innerHTML =
+    kpi("总客户", d.kpis.total_customers) +
+    kpi("L3+ 意向", d.kpis.l3_plus) +
+    kpi("高意向", d.kpis.high_intent) +
+    kpi("已报名", d.kpis.enrolled) +
+    kpi("已成交", d.kpis.won) +
+    kpi("今日消息", d.kpis.today_messages) +
+    kpi("今日 Token", usage ? fmt(usage.total_tokens) : 0, "DeepSeek") +
+    kpi("今日调用", usage ? fmt(usage.calls) : 0);
+
+  const maxStage = Math.max(...d.stage_distribution.map((x) => x.count), 1);
+  $("dashboard-stages").innerHTML = `
+    <table>
+      <thead><tr><th>阶段</th><th class="num">客户数</th><th>分布</th></tr></thead>
+      <tbody>${d.stage_distribution.map((x) => `
+        <tr><td>${x.label}</td><td class="num">${fmt(x.count)}</td><td style="min-width:120px">${bar(x.count, maxStage)}</td></tr>`).join("") || '<tr><td colspan="3" class="empty">暂无客户</td></tr>'}</tbody>
+    </table>`;
+
+  if (!d.daily_new.length) {
+    $("dashboard-daily").innerHTML = '<div class="empty">近 7 天暂无新增客户</div>';
+  } else {
+    const max = Math.max(...d.daily_new.map((x) => x.count));
+    $("dashboard-daily").innerHTML = `<div class="chart">${d.daily_new.map((x) => `
+      <div class="col">
+        <div class="val">${x.count}</div>
+        <div class="bar-wrap"><div class="bar-fill" style="height:${Math.max(x.count / max * 100, 3)}%"></div></div>
+        <div class="day">${x.date.slice(5)}</div>
+      </div>`).join("")}</div>`;
+  }
+
+  const usageRows = (d.usage || []).map((u) => `
+    <tr>
+      <td>${u.day}</td>
+      <td class="num">${fmt(u.calls)}</td>
+      <td class="num">${fmt(u.prompt_tokens)}</td>
+      <td class="num">${fmt(u.completion_tokens)}</td>
+      <td class="num">${fmt(u.total_tokens)}</td>
+    </tr>`).join("");
+  $("dashboard-usage").innerHTML = `
+    <table>
+      <thead><tr><th>日期</th><th class="num">调用</th><th class="num">输入 Token</th><th class="num">输出 Token</th><th class="num">总 Token</th></tr></thead>
+      <tbody>${usageRows || '<tr><td colspan="5" class="empty">暂无用量数据</td></tr>'}</tbody>
+    </table>`;
+}
+
+function renderMonitor() {
+  const m = state.monitor;
+  if (!m) return;
+  const botOnline = m.bots && m.bots.wechat;
+  $("monitor-kpis").innerHTML =
+    kpi("QPS", m.qps, "近 5 分钟") +
+    kpi("平均延迟", m.avg_latency_ms + " ms") +
+    kpi("P95 延迟", m.p95_latency_ms + " ms") +
+    kpi("错误率", m.error_rate + "%", m.error_count + " 次错误") +
+    `<div class="kpi"><div class="label">微信机器人</div><div class="value">${botOnline ? "在线" : "离线"}</div><div class="hint">30 秒心跳</div></div>`;
+
+  const rows = Object.entries(m.by_endpoint || {}).map(([ep, d]) => `
+    <tr>
+      <td>${ep}</td>
+      <td class="num">${fmt(d.calls)}</td>
+      <td class="num">${fmt(d.errors)}</td>
+      <td>${d.errors && d.calls ? `<span class="badge danger">有错误</span>` : `<span class="badge ok">正常</span>`}</td>
+    </tr>`).join("");
+  $("monitor-table").innerHTML = `
+    <table>
+      <thead><tr><th>接口</th><th class="num">调用次数</th><th class="num">错误次数</th><th>状态</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="4" class="empty">近 5 分钟暂无接口调用</td></tr>'}</tbody>
+    </table>`;
+}
+
+const LEAD_STATUS_LABELS = {
+  pending: "公海",
+  assigned: "已分配",
+  claimed: "已认领",
+  following: "跟进中",
+  won: "已成交",
+  lost: "已流失",
+};
+const LEAD_SOURCE_LABELS = {
+  wechat: "个人微信",
+  official: "公众号",
+  ad: "广告",
+  form: "表单",
+  import: "批量导入",
+  other: "其他",
+};
+
+function leadStatusBadge(status) {
+  const label = LEAD_STATUS_LABELS[status] || status;
+  const cls = status === "won" ? "ok" : status === "lost" ? "danger" : status === "pending" ? "muted" : "warn";
+  return `<span class="badge ${cls}">${esc(label)}</span>`;
+}
+
+async function loadLeads() {
+  const status = $("lead-status-filter").value;
+  const keyword = $("lead-keyword").value.trim();
+  const params = new URLSearchParams();
+  if (status) params.set("status", status);
+  if (keyword) params.set("keyword", keyword);
+  const qs = params.toString() ? "?" + params.toString() : "";
+  const [listRes, stats] = await Promise.all([
+    fetchJSON("/api/v1/leads" + qs),
+    fetchJSON("/api/v1/leads/stats"),
+  ]);
+  state.leads = { list: listRes.leads || [], stats };
+  renderLeads();
+}
+
+async function leadAction(leadId, action) {
+  try {
+    if (action === "follow") {
+      const note = prompt("跟进备注（可留空）");
+      if (note === null) return;
+      await postJSON(`/api/v1/leads/${leadId}/follow`, { note: note || "" });
+    } else if (action === "claim") {
+      await postJSON(`/api/v1/leads/${leadId}/claim`, {});
+    } else if (action === "won" || action === "lost") {
+      await postJSON(`/api/v1/leads/${leadId}/status`, { status: action });
+    }
+    await loadLeads();
+  } catch (e) {
+    showError("线索操作失败：" + e.message);
+  }
+}
+
+function renderLeads() {
+  const d = state.leads;
+  const stats = d.stats || {};
+  $("leads-kpis").innerHTML =
+    kpi("线索总数", stats.total) +
+    kpi("公海", stats.ocean) +
+    kpi("已分配", stats.assigned) +
+    kpi("跟进中", stats.following) +
+    kpi("已成交", stats.won) +
+    kpi("今日新增", stats.today_new);
+
+  const rows = d.list.map((l) => {
+    const contact = l.phone || l.wechat_id || l.unionid || "-";
+    const actions = [];
+    if (l.status === "pending") {
+      actions.push(`<button type="button" data-id="${l.id}" data-action="claim">认领</button>`);
+    }
+    if (l.status !== "won" && l.status !== "lost") {
+      actions.push(`<button type="button" data-id="${l.id}" data-action="follow">跟进</button>`);
+      actions.push(`<button type="button" data-id="${l.id}" data-action="won">成交</button>`);
+    }
+    if (l.status !== "lost") {
+      actions.push(`<button type="button" data-id="${l.id}" data-action="lost">流失</button>`);
+    }
+    return `
+      <tr>
+        <td>${l.id}</td>
+        <td>${esc(l.name || l.nickname || "未命名")}</td>
+        <td>${esc(contact)}</td>
+        <td>${esc(LEAD_SOURCE_LABELS[l.source] || l.source || "-")}</td>
+        <td>${esc(l.channel_id || "-")}</td>
+        <td>${esc(l.intent_level || "-")}</td>
+        <td>${esc(l.stage || "-")}</td>
+        <td>${leadStatusBadge(l.status)}</td>
+        <td>${esc(l.owner || "-")}</td>
+        <td>${esc(l.next_follow_up || "-")}</td>
+        <td>${esc((l.updated_at || "").slice(0, 16))}</td>
+        <td><div class="lead-actions">${actions.join("") || "-"}</div></td>
+      </tr>`;
+  }).join("");
+
+  $("leads-table").innerHTML = `
+    <table>
+      <thead><tr>
+        <th>ID</th><th>姓名/昵称</th><th>手机/微信</th><th>来源</th><th>广告位/活码</th>
+        <th>意向</th><th>阶段</th><th>状态</th><th>归属人</th><th>下次跟进</th><th>更新时间</th><th>操作</th>
+      </tr></thead>
+      <tbody>${rows || '<tr><td colspan="12" class="empty">暂无线索，可先下载模板批量导入</td></tr>'}</tbody>
+    </table>`;
+
+  const maxSource = Math.max(...Object.values(stats.by_source || {}), 1);
+  const sourceRows = Object.entries(stats.by_source || {}).map(([key, count]) => `
+    <tr>
+      <td>${esc(LEAD_SOURCE_LABELS[key] || key)}</td>
+      <td class="num">${fmt(count)}</td>
+      <td style="min-width:160px">${bar(count, maxSource)}</td>
+    </tr>`).join("");
+  $("leads-source").innerHTML = `
+    <table>
+      <thead><tr><th>渠道</th><th class="num">线索数</th><th>分布</th></tr></thead>
+      <tbody>${sourceRows || '<tr><td colspan="3" class="empty">暂无渠道数据</td></tr>'}</tbody>
+    </table>`;
+}
+
+async function importLeadFile() {
+  const fileInput = $("lead-file");
+  const file = fileInput.files && fileInput.files[0];
+  if (!file) {
+    showError("请先选择要导入的 CSV / Excel 文件");
+    return;
+  }
+  showError("");
+  const form = new FormData();
+  form.append("file", file);
+  try {
+    const res = await fetch("/api/v1/leads/import", { method: "POST", headers: apiHeaders(), body: form });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    alert(`导入完成：新增 ${data.created} 条，更新 ${data.updated} 条，失败 ${data.failed} 条`);
+    fileInput.value = "";
+    await loadLeads();
+  } catch (e) {
+    showError("导入失败：" + e.message);
+  }
+}
+
+async function loadOrders() {
+  const [stats, orders, afterSales] = await Promise.all([
+    fetchJSON("/api/v1/orders/stats"),
+    fetchJSON("/api/v1/orders"),
+    fetchJSON("/api/v1/after-sales"),
+  ]);
+  state.orders = { stats, orders: orders.orders || [], after_sales: afterSales.after_sales || [] };
+  renderOrders();
+}
+
+function renderOrders() {
+  const d = state.orders;
+  const stats = d.stats || {};
+  $("orders-kpis").innerHTML =
+    kpi("订单总数", stats.total_orders) +
+    kpi("已支付", stats.paid_orders) +
+    kpi("已支付金额", "¥" + fmt(stats.paid_amount)) +
+    kpi("售后", stats.after_sales);
+
+  const rows = d.orders.map((o) => {
+    const actions = [];
+    if (o.status === "draft") {
+      actions.push(`<button type="button" data-pay="${o.id}">支付</button>`);
+    }
+    if (o.status === "paid") {
+      actions.push(`<button type="button" data-after="${o.id}">售后</button>`);
+    }
+    return `
+      <tr>
+        <td>${esc(o.order_no)}</td>
+        <td>${esc(o.customer_name || "-")}</td>
+        <td>${esc(o.phone || "-")}</td>
+        <td>${esc(o.product_name || "-")}</td>
+        <td class="num">¥${fmt(o.amount)}</td>
+        <td>${esc(o.status)}</td>
+        <td>${esc(o.pay_method || "-")}</td>
+        <td>${esc((o.created_at || "").slice(0, 16))}</td>
+        <td><div class="lead-actions">${actions.join("") || "-"}</div></td>
+      </tr>`;
+  }).join("");
+  $("orders-table").innerHTML = `
+    <table>
+      <thead><tr><th>订单号</th><th>客户</th><th>手机</th><th>产品</th><th class="num">金额</th><th>状态</th><th>支付方式</th><th>创建时间</th><th>操作</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="9" class="empty">暂无订单</td></tr>'}</tbody>
+    </table>`;
+
+  const afterRows = d.after_sales.map((a) => `
+    <tr>
+      <td>${a.id}</td>
+      <td>${a.order_id}</td>
+      <td>${esc(a.reason || "-")}</td>
+      <td>${esc(a.status)}</td>
+      <td>${esc(a.handler || "-")}</td>
+      <td>${esc((a.created_at || "").slice(0, 16))}</td>
+    </tr>`).join("");
+  $("after-sales-table").innerHTML = `
+    <table>
+      <thead><tr><th>ID</th><th>订单ID</th><th>原因</th><th>状态</th><th>处理人</th><th>创建时间</th></tr></thead>
+      <tbody>${afterRows || '<tr><td colspan="6" class="empty">暂无售后</td></tr>'}</tbody>
+    </table>`;
+}
+
+async function loadFollowup() {
+  const [stats, tasks] = await Promise.all([
+    fetchJSON("/api/v1/followups/stats"),
+    fetchJSON("/api/v1/followups/tasks"),
+  ]);
+  state.followup = { stats, tasks: tasks.tasks || [] };
+  renderFollowup();
+}
+
+function renderFollowup() {
+  const d = state.followup;
+  const stats = d.stats || {};
+  $("followup-kpis").innerHTML =
+    kpi("待发送", stats.pending) +
+    kpi("已发送", stats.sent) +
+    kpi("任务总数", stats.total);
+  const rows = d.tasks.map((t) => `
+    <tr>
+      <td>${t.node_label}</td>
+      <td>${esc(t.session_id || "-")}</td>
+      <td>${esc(t.channel || "-")}</td>
+      <td>${esc(t.due_at || "-")}</td>
+      <td>${esc(t.status)}</td>
+      <td>${esc(t.content || "")}</td>
+    </tr>`).join("");
+  $("followup-table").innerHTML = `
+    <table>
+      <thead><tr><th>节点</th><th>客户ID</th><th>通道</th><th>到期时间</th><th>状态</th><th>内容</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="6" class="empty">暂无跟进计划，可在客户ID处创建</td></tr>'}</tbody>
+    </table>`;
+}
+
+async function loadQuality() {
+  const [stats, reports] = await Promise.all([
+    fetchJSON("/api/v1/quality/stats"),
+    fetchJSON("/api/v1/quality/reports"),
+  ]);
+  state.quality = { stats, reports: reports.reports || [] };
+  renderQuality();
+}
+
+function renderQuality() {
+  const d = state.quality;
+  const stats = d.stats || {};
+  $("quality-kpis").innerHTML =
+    kpi("质检次数", stats.total) +
+    kpi("平均分", stats.avg_score) +
+    kpi("需改进", (stats.by_score || {})["需改进"] || 0) +
+    kpi("问题数", stats.issue_count);
+  const rows = d.reports.map((r) => `
+    <tr>
+      <td>${r.id}</td>
+      <td>${esc(r.session_id || r.customer_id || "-")}</td>
+      <td class="num">${r.score}</td>
+      <td class="num">${r.sop_score}</td>
+      <td class="num">${r.tone_score}</td>
+      <td>${esc((r.issues || "-").split("\n")[0])}</td>
+      <td>${esc((r.created_at || "").slice(0, 16))}</td>
+    </tr>`).join("");
+  $("quality-table").innerHTML = `
+    <table>
+      <thead><tr><th>ID</th><th>客户</th><th class="num">总分</th><th class="num">SOP</th><th class="num">语气</th><th>问题</th><th>时间</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="7" class="empty">暂无质检记录</td></tr>'}</tbody>
+    </table>`;
+}
+
+async function loadKnowledge() {
+  const [stats, files, versions] = await Promise.all([
+    fetchJSON("/api/v1/knowledge/stats"),
+    fetchJSON("/api/v1/knowledge/files"),
+    fetchJSON("/api/v1/knowledge/versions"),
+  ]);
+  state.knowledge = { stats, files: files.files || [], versions: versions.versions || [] };
+  renderKnowledge();
+}
+
+function renderKnowledge() {
+  const d = state.knowledge;
+  const stats = d.stats || {};
+  $("knowledge-kpis").innerHTML =
+    kpi("文件数", stats.source_files) +
+    kpi("向量块", stats.vector_count) +
+    kpi("支持格式", (stats.supported_formats || []).length);
+  const rows = d.files.map((f) => `
+    <tr>
+      <td>${esc(f.name)}</td>
+      <td class="num">${fmt(f.size)}</td>
+      <td>${esc(new Date(f.modified * 1000).toLocaleString("zh-CN"))}</td>
+    </tr>`).join("");
+  $("knowledge-files").innerHTML = `
+    <table>
+      <thead><tr><th>文件名</th><th class="num">大小</th><th>更新时间</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="3" class="empty">暂无知识文件</td></tr>'}</tbody>
+    </table>`;
+  const versionRows = d.versions.map((v) => `
+    <tr>
+      <td>${esc(v.filename)}</td>
+      <td class="num">${v.version}</td>
+      <td>${esc((v.file_hash || "").slice(0, 12))}</td>
+      <td class="num">${fmt(v.size)}</td>
+      <td>${v.active ? "启用" : "停用"}</td>
+      <td>${esc((v.created_at || "").slice(0, 16))}</td>
+    </tr>`).join("");
+  $("knowledge-versions").innerHTML = `
+    <table>
+      <thead><tr><th>文件名</th><th class="num">版本</th><th>指纹</th><th class="num">大小</th><th>状态</th><th>时间</th></tr></thead>
+      <tbody>${versionRows || '<tr><td colspan="6" class="empty">暂无版本记录</td></tr>'}</tbody>
+    </table>`;
+}
+
+async function loadSystem() {
+  const data = await fetchJSON("/api/v1/audit");
+  state.system = { logs: data.logs || [] };
+  renderSystem();
+}
+
+function renderSystem() {
+  const rows = state.system.logs.map((l) => `
+    <tr>
+      <td>${esc(l.time || "-")}</td>
+      <td>${esc(l.actor)}</td>
+      <td>${esc(l.action)}</td>
+      <td>${esc(l.resource || "-")}</td>
+      <td>${esc(l.detail || "-")}</td>
+    </tr>`).join("");
+  $("audit-table").innerHTML = `
+    <table>
+      <thead><tr><th>时间</th><th>操作人</th><th>动作</th><th>资源</th><th>详情</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="5" class="empty">暂无审计日志</td></tr>'}</tbody>
+    </table>`;
+}
+
+async function downloadCSV(url, filename) {
+  try {
+    const res = await fetch(url, { headers: apiHeaders() });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const blob = await res.blob();
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  } catch (e) {
+    showError("导出失败：" + e.message);
+  }
+}
+
+function renderAll() {
+  renderConversion();
+  renderFollowups();
+  renderDashboard();
+  renderMonitor();
+  renderLeads();
+  renderOrders();
+  renderFollowup();
+  renderQuality();
+  renderKnowledge();
+  renderSystem();
+  $("updated").textContent = "更新于 " + new Date().toLocaleString("zh-CN");
+}
+
+async function loadAll() {
+  showError("");
+  try {
+    const [c, f, d, m] = await Promise.all([
+      fetchJSON("/api/v1/reports/conversion?days=30"),
+      fetchJSON("/api/v1/reports/followups?limit=200"),
+      fetchJSON("/api/v1/reports/dashboard?days=7"),
+      fetchJSON("/api/v1/monitor/metrics?window=300"),
+    ]);
+    state = { conversion: c, followups: f, dashboard: d, monitor: m };
+    await loadLeads();
+    await loadOrders();
+    await loadFollowup();
+    await loadQuality();
+    await loadKnowledge();
+    try {
+      await loadSystem();
+    } catch (e) {
+      state.system = { logs: [] };
+    }
+    renderAll();
+  } catch (e) {
+    showError("加载报表失败：" + e.message);
+  }
+}
+
+tabs.forEach(([key, id]) => {
+  $("tab-" + key).addEventListener("click", () => {
+    tabs.forEach(([k]) => {
+      $("tab-" + k).classList.toggle("active", k === key);
+      $("tab-" + k).setAttribute("aria-selected", k === key ? "true" : "false");
+      $("panel-" + k).classList.toggle("active", k === key);
+    });
+  });
+});
+
+$("refresh").addEventListener("click", loadAll);
+$("set-api-key").addEventListener("click", () => {
+  const key = prompt("请输入接口 API Key（留空清除）", API_KEY || "");
+  if (key === null) return;
+  localStorage.setItem("sales_api_key", key.trim());
+  location.reload();
+});
+$("lead-import").addEventListener("click", importLeadFile);
+$("lead-search").addEventListener("click", loadLeads);
+$("lead-status-filter").addEventListener("change", loadLeads);
+$("lead-keyword").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") loadLeads();
+});
+$("lead-recycle").addEventListener("click", async () => {
+  try {
+    const data = await postJSON("/api/v1/leads/recycle", {});
+    alert(`公海回收完成：${data.recycled} 条超时线索退回公海`);
+    await loadLeads();
+  } catch (e) {
+    showError("回收失败：" + e.message);
+  }
+});
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-action]");
+  if (btn) leadAction(Number(btn.dataset.id), btn.dataset.action);
+});
+$("order-create").addEventListener("click", async () => {
+  try {
+    await postJSON("/api/v1/orders", {
+      customer_name: $("order-name").value.trim(),
+      phone: $("order-phone").value.trim(),
+      product_name: $("order-product").value.trim(),
+      amount: Number($("order-amount").value || 0),
+    });
+    $("order-name").value = "";
+    $("order-phone").value = "";
+    $("order-product").value = "";
+    $("order-amount").value = "";
+    await loadOrders();
+  } catch (e) {
+    showError("创建订单失败：" + e.message);
+  }
+});
+$("followup-plan").addEventListener("click", async () => {
+  try {
+    const data = await postJSON("/api/v1/followups/plan", { session_id: $("followup-session").value.trim() });
+    alert(`已创建 ${data.created} 条跟进任务`);
+    await loadFollowup();
+  } catch (e) {
+    showError("创建跟进计划失败：" + e.message);
+  }
+});
+$("followup-dispatch").addEventListener("click", async () => {
+  try {
+    const data = await postJSON("/api/v1/followups/dispatch", {});
+    alert(`已派发 ${data.sent} 条到期跟进`);
+    await loadFollowup();
+  } catch (e) {
+    showError("派发跟进失败：" + e.message);
+  }
+});
+$("quality-check").addEventListener("click", async () => {
+  try {
+    const data = await postJSON("/api/v1/quality/check", { session_id: $("quality-session").value.trim() });
+    if (!data.report) alert("未找到客户档案，质检前需要客户达到 L3");
+    await loadQuality();
+  } catch (e) {
+    showError("质检失败：" + e.message);
+  }
+});
+$("coach-generate").addEventListener("click", async () => {
+  try {
+    const data = await postJSON("/api/v1/quality/coach", { stage: $("coach-stage").value });
+    $("coach-output").textContent = "陪练客户：" + (data.message || "");
+  } catch (e) {
+    showError("生成陪练失败：" + e.message);
+  }
+});
+$("knowledge-upload").addEventListener("click", async () => {
+  const fileInput = $("knowledge-file");
+  const file = fileInput.files && fileInput.files[0];
+  if (!file) {
+    showError("请先选择知识库文件");
+    return;
+  }
+  try {
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch("/api/v1/knowledge/upload", { method: "POST", headers: apiHeaders(), body: form });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    alert(`上传成功：${data.filename}，导入 ${data.imported} 个文档块`);
+    fileInput.value = "";
+    await loadKnowledge();
+  } catch (e) {
+    showError("知识库上传失败：" + e.message);
+  }
+});
+$("knowledge-rebuild").addEventListener("click", async () => {
+  try {
+    const data = await postJSON("/api/v1/knowledge/rebuild", {});
+    alert(`重建完成：导入 ${data.imported} 个文档块`);
+    await loadKnowledge();
+  } catch (e) {
+    showError("知识库重建失败：" + e.message);
+  }
+});
+$("knowledge-add-text").addEventListener("click", async () => {
+  const content = $("knowledge-text").value.trim();
+  if (!content) return;
+  try {
+    await postJSON("/api/v1/knowledge/text", { content });
+    $("knowledge-text").value = "";
+    await loadKnowledge();
+  } catch (e) {
+    showError("知识文本添加失败：" + e.message);
+  }
+});
+document.addEventListener("click", async (e) => {
+  const payBtn = e.target.closest("button[data-pay]");
+  if (payBtn) {
+    try {
+      await postJSON(`/api/v1/orders/${payBtn.dataset.pay}/pay`, { method: "wechat" });
+      await loadOrders();
+    } catch (err) {
+      showError("支付确认失败：" + err.message);
+    }
+    return;
+  }
+  const afterBtn = e.target.closest("button[data-after]");
+  if (afterBtn) {
+    const reason = prompt("售后原因");
+    if (reason === null) return;
+    try {
+      await postJSON(`/api/v1/orders/${afterBtn.dataset.after}/after-sale`, { reason });
+      await loadOrders();
+    } catch (err) {
+      showError("售后创建失败：" + err.message);
+    }
+    return;
+  }
+  const exportBtn = e.target.closest("button[data-export]");
+  if (exportBtn) {
+    downloadCSV(exportBtn.dataset.export, exportBtn.dataset.name);
+  }
+});
+loadAll();
+</script>
+</body>
+</html>

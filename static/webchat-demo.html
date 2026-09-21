@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>网页客服演示</title>
+<style>
+  body { font-family: "Microsoft YaHei", sans-serif; margin: 0; background: #f3f5f9; color: #1e293b; }
+  .hero { background: linear-gradient(135deg,#0f172a,#1e3a5f); color: #fff; padding: 60px 24px; text-align: center; }
+  .hero h1 { font-size: 26px; margin-bottom: 8px; }
+  .hero p { color: #cbd5e1; }
+  .content { max-width: 800px; margin: 30px auto; padding: 0 20px; }
+  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; }
+  .card h2 { font-size: 16px; margin-bottom: 8px; }
+  code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+</style>
+</head>
+<body>
+  <div class="hero">
+    <h1>天赋家 · 销售智能体</h1>
+    <p>这是网页客服演示页，右下角蓝色按钮就是在线咨询入口</p>
+  </div>
+  <div class="content">
+    <div class="card">
+      <h2>嵌入方式</h2>
+      <p>在任何网页的 body 末尾加入以下两行即可启用聊天窗口：</p>
+      <pre style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;font-size:12px;overflow:auto"><code>&lt;script src="http://127.0.0.1:5000/static/webchat-widget.js"&gt;&lt;/script&gt;
+&lt;script&gt;window.SalesWebChatOptions = { visitorName: "访客" };&lt;/script&gt;</code></pre>
+    </div>
+  </div>
+
+  <script>
+    window.SalesWebChatOptions = { visitorName: "演示访客" };
+  </script>
+  <script src="/static/webchat-widget.js"></script>
+</body>
+</html>

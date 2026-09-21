@@ -1,0 +1,296 @@
+﻿# ===== 公共片段 =====
+# 日志轮转：原先 7 个服务各自抄一遍，漏一个就会把磁盘写满
+# （api 的日志在没有 max-size 时限会造成宿主机磁盘 100%）。
+x-default-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "5"
+
+# 构建参数：容器以非 root（默认 uid/gid 1000）运行，而 data/ 与 vector_store/
+# 是 bind mount，宿主机目录属主必须与之一致。deploy.sh 会用同一组 UID/GID
+# chown 这两个目录，两边由同一份 .env 里的 APP_UID/APP_GID 驱动。
+x-default-build: &default-build
+  context: .
+  args:
+    APP_UID: ${APP_UID:-1000}
+    APP_GID: ${APP_GID:-1000}
+
+services:
+  # ===== 数据库 =====
+  # 不再映射到宿主机：只有 compose 内部网络需要访问它。
+  postgres:
+    # pgvector/pgvector 基于 PostgreSQL 16，并预装 vector 扩展。
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: sales
+      POSTGRES_USER: sales
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-sales2026}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    # mem_limit 在 docker compose up（非 swarm）下才会真正生效，
+    # deploy.resources.limits 只在 swarm 里生效，因此这里用 mem_limit。
+    mem_limit: 256m
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sales"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===== Redis（状态/队列）=====
+  # 承载 Celery broker(db1)/result(db2)、会话、同用户锁、消息去重键、限流计数。
+  # 这些键一旦被淘汰会造成「重复回复 / 串行保护失效 / 限流失效」，因此：
+  #   - 淘汰策略用 noeviction（内存满时写入报错，而不是静默丢数据）
+  #   - 开启 AOF，重启不丢锁与去重键
+  # 语义缓存走独立的 redis-cache，见下。
+  redis:
+    image: redis:7-alpine
+    command: >
+      redis-server
+      --maxmemory 256mb
+      --maxmemory-policy noeviction
+      --appendonly yes
+      --appendfsync everysec
+      --requirepass ${REDIS_PASSWORD:-sales-redis-2026}
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-sales-redis-2026}
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    mem_limit: 320m
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===== Redis（语义缓存）=====
+  # 纯缓存，可以被 LRU 淘汰，与上面的状态库物理隔离。
+  redis-cache:
+    image: redis:7-alpine
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru --requirepass ${REDIS_PASSWORD:-sales-redis-2026}
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-sales-redis-2026}
+    volumes:
+      - redis_cache_data:/data
+    restart: unless-stopped
+    mem_limit: 192m
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===== 数据库结构升级（一次性任务）=====
+  # `docker compose up -d` 会先等这个服务成功退出，再启动 api/official/worker。
+  # 因此发布流程不需要在宿主机手工执行 alembic；deploy/migrate.sh 内部会自动区分
+  # 「全新空库 / create_all 老库 / 已纳管库」三种形态并升级，最后做结构一致性校验，
+  # 校验不通过会以非 0 退出从而阻断整次发布。
+  migrate:
+    build: *default-build
+    command: sh deploy/migrate.sh
+    working_dir: /app
+    volumes:
+      - ./data:/app/data
+      # 直接挂宿主机代码（只读）：发布流程用 docker cp 更新容器代码、不重建镜像，
+      # 若这里只用镜像内的旧代码，就会拿着过期的迁移链去升级库。
+      - ./migrations:/app/migrations:ro
+      - ./core:/app/core:ro
+      - ./config:/app/config:ro
+      - ./deploy:/app/deploy:ro
+      - ./alembic.ini:/app/alembic.ini:ro
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://sales:${PG_PASSWORD:-sales2026}@postgres:5432/sales
+      # 迁移服务本身不建表，全部交给 alembic
+      AUTO_CREATE_TABLES: "false"
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    mem_limit: 512m
+    # 一次性任务不监听端口，别被镜像里的 /health 探针误判为 unhealthy。
+    healthcheck:
+      disable: true
+
+  # ===== API 服务（多 Worker）=====
+  api:
+    build: *default-build
+    command: python -c "import uvicorn; uvicorn.run('api_server:app', host='0.0.0.0', port=5000, workers=2)"
+    ports:
+      # 只监听本机回环，由 nginx 反代；不再对公网暴露 5010
+      - "127.0.0.1:5010:5000"
+    volumes:
+      - ./data:/app/data
+      - ./vector_store:/app/vector_store
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://sales:${PG_PASSWORD:-sales2026}@postgres:5432/sales
+      REDIS_URL: redis://:${REDIS_PASSWORD:-sales-redis-2026}@redis:6379/0
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-sales-redis-2026}@redis:6379/1
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD:-sales-redis-2026}@redis:6379/2
+      CACHE_REDIS_URL: redis://:${REDIS_PASSWORD:-sales-redis-2026}@redis-cache:6379/0
+      # 表结构由 migrate 服务负责，禁止再走 create_all（否则新增字段在线上静默失效）
+      AUTO_CREATE_TABLES: "false"
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    mem_limit: 1024m
+    logging: *default-logging
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    security_opt:
+      - no-new-privileges:true
+    # 给正在处理中的回复留出收尾时间，避免重启时把一条回复截断在中间。
+    stop_grace_period: 30s
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:5000/health', timeout=5).status==200 else 1)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ===== 公众号入口 =====
+  official:
+    build: *default-build
+    command: python main.py --channel official
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ./data:/app/data
+      - ./vector_store:/app/vector_store
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://sales:${PG_PASSWORD:-sales2026}@postgres:5432/sales
+      REDIS_URL: redis://:${REDIS_PASSWORD:-sales-redis-2026}@redis:6379/0
+      # 必须显式指定：否则 producer 会回退到 REDIS_URL(db0)，
+      # 而 worker 只消费 db1，任务会永远堆积且不报错。
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-sales-redis-2026}@redis:6379/1
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD:-sales-redis-2026}@redis:6379/2
+      CACHE_REDIS_URL: redis://:${REDIS_PASSWORD:-sales-redis-2026}@redis-cache:6379/0
+      AUTO_CREATE_TABLES: "false"
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    mem_limit: 400m
+    logging: *default-logging
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 30s
+    healthcheck:
+      # 用 TCP 连通性判断：公众号服务只暴露 webhook 路由，
+      # 没有通用 /health，但"端口能连上"已经能区分进程活着还是死了。
+      test: ["CMD-SHELL", "python -c \"import socket,sys; s=socket.socket(); s.settimeout(3); sys.exit(0 if s.connect_ex(('127.0.0.1',8080))==0 else 1)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ===== Celery Worker（异步任务）=====
+  worker:
+    build: *default-build
+    command: celery -A core.tasks worker --loglevel=info --concurrency=2 --max-tasks-per-child=50 --max-memory-per-child=1200000 -Q sales_agent
+    volumes:
+      - ./data:/app/data
+      - ./vector_store:/app/vector_store
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://sales:${PG_PASSWORD:-sales2026}@postgres:5432/sales
+      REDIS_URL: redis://:${REDIS_PASSWORD:-sales-redis-2026}@redis:6379/0
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-sales-redis-2026}@redis:6379/1
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD:-sales-redis-2026}@redis:6379/2
+      CACHE_REDIS_URL: redis://:${REDIS_PASSWORD:-sales-redis-2026}@redis-cache:6379/0
+      AUTO_CREATE_TABLES: "false"
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    mem_limit: 2048m
+    logging: *default-logging
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 60s
+    healthcheck:
+      # worker 不监听端口，只能问 Celery 自己。原先 worker 完全没有健康检查，
+      # 进程挂在半死状态（broker 断了、任务不消费）时 compose 是看不出来的。
+      test: ["CMD-SHELL", "celery -A core.tasks inspect ping --timeout 10 -q >/dev/null 2>&1 || exit 1"]
+      interval: 60s
+      timeout: 20s
+      retries: 3
+      start_period: 120s
+
+  # ===== Celery Beat（定时任务调度）=====
+  beat:
+    build: *default-build
+    working_dir: /app
+    command: python /app/deploy/run_beat.py
+    volumes:
+      - ./data:/app/data
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://sales:${PG_PASSWORD:-sales2026}@postgres:5432/sales
+      REDIS_URL: redis://:${REDIS_PASSWORD:-sales-redis-2026}@redis:6379/0
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-sales-redis-2026}@redis:6379/1
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD:-sales-redis-2026}@redis:6379/2
+      AUTO_CREATE_TABLES: "false"
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    mem_limit: 256m
+    logging: *default-logging
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 30s
+    # beat 只是往 broker 投递定时任务，没有可探活的入口；
+    # 用 restart 策略兜底，不做假健康检查。
+    healthcheck:
+      disable: true
+
+volumes:
+  pg_data:
+  redis_data:
+  redis_cache_data:

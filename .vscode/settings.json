@@ -1,0 +1,7 @@
+{
+  "python.defaultInterpreterPath": "C:\\Program Files\\Python311\\python.exe",
+  "python.terminal.activateEnvironment": false,
+  "terminal.integrated.cwd": "${workspaceFolder}",
+  "files.encoding": "utf8",
+  "files.autoGuessEncoding": true
+}

@@ -1,0 +1,79 @@
+{
+  "name": "sales-agent-console",
+  "version": "1.0.11",
+  "description": "销售客服智能体 - 中台桌面版",
+  "main": "main.js",
+  "author": "ruanxueke",
+  "license": "Apache-2.0",
+  "scripts": {
+    "start": "electron .",
+    "smoke": "electron . --smoke-test",
+    "build": "electron-builder --win nsis",
+    "dist": "electron-builder --win nsis"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.tianfujia.salesagent",
+    "productName": "SalesAgentConsole",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../vision_agent",
+        "to": "vision_agent"
+      },
+      {
+        "from": "../vision_agent_config.json",
+        "to": "vision_agent_config.json"
+      },
+      {
+        "from": "../wechat_bridge",
+        "to": "wechat_bridge",
+        "filter": [
+          "**/*",
+          "!data/**",
+          "!**/__pycache__/**",
+          "!**/*.pyc",
+          "!*.log",
+          "!config.json",
+          "!config.live.json",
+          "!config.mvp-test.json",
+          "!config.cloud-test.json",
+          "!config.auto-test.json",
+          "!config.desktop.local.json"
+        ]
+      },
+      {
+        "from": "../deploy/install_wechat_bridge_service.ps1",
+        "to": "deploy/install_wechat_bridge_service.ps1"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    }
+  },
+  "allowScripts": {}
+}
