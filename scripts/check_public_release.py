@@ -10,6 +10,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent.parent
+SELF_PATH = Path(__file__).resolve().relative_to(ROOT).as_posix()
 GIT = shutil.which("git")
 if GIT is None:
     for candidate in (
@@ -78,6 +79,8 @@ def main() -> int:
             failures.append(f"forbidden runtime file is tracked: {name}")
 
     for path in files:
+        if path.as_posix() == SELF_PATH:
+            continue
         if path.suffix.lower() not in TEXT_SUFFIXES and path.name != "Dockerfile":
             continue
         try:
